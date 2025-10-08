@@ -69,6 +69,7 @@ const TextButton = () => {
             key={i}
             variant={"outline"}
             onClick={() => setUserInput(item.prompt)}
+            className="rounded-full"
           >
             <item.icon />
             {item.label}
