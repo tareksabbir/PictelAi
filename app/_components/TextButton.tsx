@@ -1,15 +1,20 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { SignInButton } from "@clerk/nextjs";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import axios from "axios";
+import { set } from "date-fns";
 import {
   ArrowUp,
   HomeIcon,
   ImagePlus,
   Key,
   LayoutDashboard,
+  Loader2Icon,
   UserIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const suggestion = [
   {
@@ -39,7 +44,33 @@ const suggestion = [
 ];
 const TextButton = () => {
   const [userInput, setUserInput] = useState<string>("");
+  const { user } = useUser();
+  const router = useRouter();
+  const [loading, setLoading] = useState<boolean>(false);
 
+  // create new project
+  const createNewProject = async () => {
+    const projectId = crypto.randomUUID();
+    const frameId = Math.floor(Math.random() * 10000);
+    const messages = [{ role: "user", content: userInput }];
+
+    try {
+      setLoading(true);
+      const result = axios.post("/api/projects", {
+        projectId,
+        frameId,
+        messages,
+      });
+      toast.success("New project created successfully");
+      // redirect to the project page or playgroud
+      router.push(`/playground/${projectId}?frameId=${frameId}`);
+      setLoading(false);
+    } catch (error) {
+      toast.error("Failed to create a new project");
+      console.log(error);
+      setLoading(false);
+    }
+  };
   return (
     <>
       {/* inputbox */}
@@ -55,11 +86,21 @@ const TextButton = () => {
           <Button variant={"ghost"}>
             <ImagePlus />
           </Button>
-          <SignInButton mode="redirect" forceRedirectUrl={"/workspaces"}>
-            <Button size={"icon"} disabled={!userInput}>
-              <ArrowUp />
+          {!user ? (
+            <SignInButton mode="redirect" forceRedirectUrl={"/workspaces"}>
+              <Button size={"icon"} disabled={!userInput}>
+                <ArrowUp />
+              </Button>
+            </SignInButton>
+          ) : (
+            <Button
+              size={"icon"}
+              disabled={!userInput || loading}
+              onClick={createNewProject}
+            >
+              {loading ? <Loader2Icon className="animate-spin" /> : <ArrowUp />}
             </Button>
-          </SignInButton>
+          )}
         </div>
       </div>
       {/* suggestions */}
