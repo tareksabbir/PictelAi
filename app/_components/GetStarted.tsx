@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 const GetStarted = () => {
   const { user } = useUser();
@@ -14,9 +15,11 @@ const GetStarted = () => {
           </Button>
         </SignInButton>
       ) : (
-        <Button>
-          Get Started <ArrowRight />
-        </Button>
+        <Link href={"/workspace"}>
+          <Button>
+            Get Started <ArrowRight />
+          </Button>
+        </Link>
       )}
     </>
   );
