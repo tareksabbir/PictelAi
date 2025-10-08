@@ -1,12 +1,12 @@
-import React from 'react'
+import React from "react";
+import Hero from "../_components/Hero";
 
 const workspaces = () => {
   return (
-    <div>
-      workspace
-    </div>
-  )
-}
+    <section>
+      <Hero />
+    </section>
+  );
+};
 
-export default workspaces
-
+export default workspaces;
