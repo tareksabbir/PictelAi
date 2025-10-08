@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { SignInButton } from "@clerk/nextjs";
-import { ArrowRight } from "lucide-react";
+
 import Image from "next/image";
+import GetStarted from "./GetStarted";
 
 const MenuItems = [
   {
@@ -31,13 +31,7 @@ const Header = () => {
       </div>
 
       {/* Get started Button */}
-      <div>
-        <SignInButton mode="redirect" forceRedirectUrl={"/workspaces"}>
-          <Button>
-            Get Started <ArrowRight />
-          </Button>
-        </SignInButton>
-      </div>
+      <GetStarted />
     </header>
   );
 };
