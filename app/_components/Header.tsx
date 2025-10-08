@@ -21,9 +21,9 @@ const Header = () => {
         <Image src="/logo.svg" alt="Logo" width={140} height={50} />
       </div>
       {/* Menu options */}
-      <div className="gap-3">
+      <div className="flex items-center gap-2">
         {MenuItems.map((menu, i) => (
-          <Button key={i} variant={"ghost"} className="text-md">
+          <Button key={i} variant={"ghost"}>
             {menu.name}
           </Button>
         ))}
