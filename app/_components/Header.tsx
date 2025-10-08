@@ -24,7 +24,7 @@ const Header = () => {
       {/* Menu options */}
       <div className="flex items-center gap-2">
         {MenuItems.map((menu, i) => (
-          <Button key={i} variant={"ghost"}>
+          <Button key={i} variant={"ghost"} className="font-semibold">
             {menu.name}
           </Button>
         ))}
