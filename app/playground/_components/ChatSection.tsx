@@ -4,9 +4,10 @@ import ChatFooter from "./ChatFooter";
 type Props = {
   messages: Messages[];
   onSend: any;
+  loading: boolean;
 };
 
-const ChatSection = ({ messages, onSend }: Props) => {
+const ChatSection = ({ messages, onSend, loading }: Props) => {
   return (
     <section className="w-96 shadow h-[95vh] p-4 flex flex-col">
       {/* Message Section  */}
@@ -33,6 +34,17 @@ const ChatSection = ({ messages, onSend }: Props) => {
             </div>
           ))
         )}
+
+        <div>
+          {loading && (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900">
+               
+              </div>
+              <span className="ml-2 text-gray-900">Thinking...</span>
+            </div>
+          )}
+        </div>
       </div>
       {/* Footer section  */}
       <ChatFooter onSend={onSend} />
