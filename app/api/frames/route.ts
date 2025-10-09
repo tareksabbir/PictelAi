@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const finalResult = {
     ...frameResult[0],
-    chatMessage: chatResult[0]?.chatMessage,
+    chatMessages: chatResult[0]?.chatMessage,
   };
 
   return NextResponse.json(finalResult);

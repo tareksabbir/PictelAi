@@ -22,5 +22,5 @@ export async function POST(req: NextRequest) {
     chatMessage: messages,
     createdBy: user?.primaryEmailAddress?.emailAddress,
   });
-   return NextResponse.json({ projectResult, frameResult, chatResult });
+  return NextResponse.json({ projectId, frameId, messages });
 }
