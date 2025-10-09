@@ -1,13 +1,12 @@
 "use client";
-import React, { useState } from "react";
+
 import PlaygroundHeader from "../_components/PlaygroundHeader";
 import ChatSection from "../_components/ChatSection";
 import WebsiteDesign from "../_components/WebsiteDesign";
 import ElementSettingSection from "../_components/ElementSettingSection";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useSearchParams } from "next/navigation";
-import { set } from "date-fns";
 
 type Messages = {
   role: string;
@@ -17,39 +16,37 @@ type Messages = {
 type Frame = {
   projectId: string;
   frameId: string;
+  designCode: string;
   chatMessages: Messages[];
 };
 
 export type { Frame, Messages };
 
 const PlayGround = () => {
-  const params = useParams();
-  const searchParams = useSearchParams();
-
-  const projectId = params.projectId;
-  const frameId = searchParams.get("frameId");
-
-  const [frameDetails, setFrameDetails] = useState<Frame | null>(null);
-
+  const { projectId } = useParams();
+  const params = useSearchParams();
+  const frameId = params.get("frameId");
+  const [frameDetail, setFrameDetail] = useState<Frame>();
   useEffect(() => {
-    if (frameId) GetFrameDetails();
+    frameId && GetFrameDetails();
   }, [frameId]);
 
   const GetFrameDetails = async () => {
-    try {
-      const result = await axios.get(
-        `/api/frames?frameId=${frameId}&projectId=${projectId}`
-      );
-      setFrameDetails(result.data);
-    } catch (error) {
-      console.error("Error fetching frame details:", error);
-    }
+    const result = await axios.get(
+      "/api/frames?frameId=" + frameId + "&projectId=" + projectId
+    );
+    console.log(result.data);
+    setFrameDetail(result.data);
   };
+
+  const SendMessage = async (userInput: string) => {
+      
+  }
   return (
     <section>
       <PlaygroundHeader />
       <div className="flex ">
-        <ChatSection messages={frameDetails?.chatMessages ?? []} />
+        <ChatSection messages={frameDetail?.chatMessages ?? []} onSend={(input:string) => SendMessage(input)}/>
         <WebsiteDesign />
         {/* <ElementSettingSection /> */}
       </div>
