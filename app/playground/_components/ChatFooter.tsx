@@ -18,7 +18,7 @@ const ChatFooter = ({ onSend }: any) => {
         placeholder="Describe your project idea here..."
         className="flex-1 resize-none border rounded-xl px-3 py-2 focus:outline-none focus:ring-2"
       ></textarea>
-      <Button>
+      <Button onClick={handleSend}>
         <ArrowUp />
       </Button>
     </div>
