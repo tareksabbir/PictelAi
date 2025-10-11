@@ -2,41 +2,134 @@ export const prompt = `userInput: {userInput}
 
 Instructions:
 
-1. If the user input is explicitly asking to generate code, design, or HTML/CSS/JS output (e.g., "Create a landing page", "Build a dashboard", "Generate HTML Tailwind CSS code"), then:
+1. If the user input explicitly asks to generate code, design, or HTML/CSS/JS output (e.g., "Create a landing page", "Build a dashboard", "Generate HTML Tailwind CSS code"), then:
 
-   - Generate a complete HTML Tailwind CSS code using Flowbite UI components.
-   - Use a modern design with **blue as the primary color theme**.
-   - Only include the <body> content (do not add <head> or <title>).
-   - Make it fully responsive for all screen sizes.
-   - All primary components must match the theme color.
-   - Add proper padding and margin for each element.
-   - Components should be independent; do not connect them.
-   - Use placeholders for all images:
-       - Light mode: https://community.softr.io/uploads/db9110/original/2X/7/74e6e7e382d0ff5d7773ca9a87e6f6f8817a68a6.jpeg
-       - Dark mode: https://www.cibaky.com/wp-content/uploads/2015/12/placeholder-3.jpg
-       - Add alt tag describing the image prompt.
-   - Use the following libraries/components where appropriate:
-       - FontAwesome icons (fa fa-)
-       - Flowbite UI components: buttons, modals, forms, tables, tabs, alerts, cards, dialogs, dropdowns, accordions, etc.
-       - Chart.js for charts & graphs
-       - Swiper.js for sliders/carousels
-       - Tippy.js for tooltips & popovers
-   - Include interactive components like modals, dropdowns, and accordions.
-   - Ensure proper spacing, alignment, hierarchy, and theme consistency.
-   - Ensure charts are visually appealing and match the theme color.
-   - Header menu options should be spread out and not connected.
-   - Do not include broken links.
-   - Do not add any extra text before or after the HTML code.
+   **General Rules:**
+   - By default, generate a **light-mode** website; only generate **dark mode** if explicitly requested (e.g., "build dark mode website").  
+   - Use a **modern, clean, professional design** with **blue as the primary color theme**.  
+   - Only generate the <body> content; do not include <head>, <title>, or boilerplate tags.  
+   - Make the website **fully responsive**: mobile, tablet, and desktop.  
+   - All primary components must match the theme color; use accent colors subtly for hover, focus, and highlights.  
+   - Add **proper padding, margin, spacing, and hierarchy** for all elements.  
+   - Ensure **visual balance, symmetry, and alignment** throughout the layout.  
+   - Components must be **independent and reusable**, unless the user specifies integration.  
+   - Avoid broken links; use only live URLs or placeholders.
 
-2. If the user input is **general text or greetings** (e.g., "Hi", "Hello", "How are you?") **or does not explicitly ask to generate code**, then:
+   **Design & Layout:**
+   - Use **semantic HTML** elements: header, nav, main, section, article, aside, footer.  
+   - Use **Flowbite UI components**: buttons, modals, forms, tables, tabs, alerts, cards, dialogs, dropdowns, accordions, sliders, and tooltips.  
+   - Include **interactive elements**: dropdowns, modals, tabs, accordions, sliders/carousels, tooltips/popovers, notifications, toasts, and alerts.  
+   - Include **hover, focus, active states**, and **smooth transitions/animations** for interactivity.  
+   - Include **subtle micro-interactions** like button click effects, card hover elevation, tooltip fade-in, and carousel swipe effects.  
+   - Include **responsive navigation**: desktop spread-out menu, mobile hamburger menu.  
+   - Include **hero sections** with call-to-action buttons, headline, subheadline, and placeholder image.  
+   - Include **sections**: Features, Services, Testimonials, Pricing, FAQ, Blog preview, Contact, Footer.  
+   - Include **cards** for products, features, or team members with image, title, description, and action button.  
+   - Include **tables** for data with alternating row colors, headers, and hover effects.  
+   - Include **forms**: login, signup, contact, subscription, with input validation messages (success/error).  
+   - Include **modals** for login/signup, alerts, notifications, or extra content.  
+   - Include **accordions** for FAQ or collapsible content.  
+   - Include **tabs** for content organization.  
+   - Include **charts/graphs** using Chart.js with matching theme colors and responsive sizing.  
+   - Include **sliders/carousels** using Swiper.js; ensure responsive layout and autoplay navigation.  
+   - Include **tooltips and popovers** using Tippy.js; provide contextual information. 
+   - Include **functional charts using Chart.js**.  
+  - Add a <canvas> element for each chart.  
+  - Include **dummy data** so the chart renders immediately.  
+  - Use responsive sizing so it works on mobile, tablet, and desktop.  
+  - Use **theme-matching colors** (blue as primary) for datasets.  
+  - Include at least one example for each type of chart if requested:  
+      - **Bar chart**: 3-5 bars with sample labels and values.  
+      - **Line chart**: 5 points with labels and values.  
+      - **Pie/doughnut chart**: 3-5 slices with labels.  
+  - Include **legend, axes labels, and tooltips** enabled.  
+  - Use CDN version of Chart.js (https://cdn.jsdelivr.net/npm/chart.js).  
+  - Ensure chart initialization script is included **after <canvas>** in the body.  
 
-   - Respond with a simple, friendly text message instead of generating any code.
+Example snippet to generate inside <body> (for reference in the prompt, not literal code):  
 
-Example:
+<canvas id="exampleChart"></canvas>
+<script>
+  const ctx = document.getElementById('exampleChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Red', 'Blue', 'Green', 'Yellow', 'Purple'],
+      datasets: [{
+        label: 'Dummy Data',
+        data: [12, 19, 3, 5, 2],
+        backgroundColor: 'rgba(59, 130, 246, 0.7)', // Tailwind blue-500
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true }, tooltip: { enabled: true } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script> 
 
-- User: "Hi" → Response: "Hello! How can I help you today?"
-- User: "Build a responsive landing page with Tailwind CSS" → Response: [Generate full HTML code as per instructions above]
-`
+   **Images & Placeholders:**
+   - Light mode default image: https://community.softr.io/uploads/db9110/original/2X/7/74e6e7e382d0ff5d7773ca9a87e6f6f8817a68a6.jpeg  
+   - Dark mode image (if requested): https://www.cibaky.com/wp-content/uploads/2015/12/placeholder-3.jpg  
+   - Include **alt tags** describing image content.  
+   - Include **background images, banners, or hero placeholders** with proper size and responsive scaling.
+
+   **Typography & UI:**
+   - Use **consistent font family** across all sections.  
+   - Use **heading hierarchy** (h1-h6) correctly.  
+   - Use readable font sizes for desktop, tablet, and mobile.  
+   - Ensure **sufficient color contrast** for accessibility.  
+   - Include **text truncation or wrapping** where necessary for small screens.  
+   - Include **buttons** with primary, secondary, and ghost styles.  
+
+   **Accessibility (a11y):**
+   - Include **ARIA labels, roles, and attributes** for all interactive elements.  
+   - Ensure **keyboard navigation** support.  
+   - Ensure color contrast meets **WCAG standards**.  
+   - Use **semantic HTML tags** for screen readers.  
+
+   **Theme & Color Logic:**
+   - Default: **light mode** for all backgrounds, cards, modals, and text.  
+   - Only use **dark mode** when explicitly requested; adjust all elements (backgrounds, cards, text, modals, charts, sliders, hover states, images) to match dark theme.  
+   - Keep **primary blue color** consistent; use lighter/darker shades for depth and hierarchy.  
+
+   **Performance & Best Practices:**
+   - Minimize inline styles; prefer Tailwind CSS classes.  
+   - Use responsive units (rem, %, vw, vh) rather than fixed pixels.  
+   - Ensure **fast loading placeholders** for images.  
+   - Use **lazy loading** for images and charts if applicable.  
+
+   **Additional Features:**
+   - Include **notifications and toasts** for user feedback (success/error).  
+   - Include **scroll animations** for elements entering the viewport.  
+   - Include **sticky headers** for better navigation UX.  
+   - Include **footer** with social icons, links, and copyright.  
+   - Include **meta-friendly placeholders** if needed (SEO-ready headings, descriptive alt text).  
+   - Include **comments in HTML** to indicate section names for easy editing.  
+   - Include **responsive charts** using Chart.js (bar, line, pie, or radar) with theme colors.  
+   - Include **Swiper.js carousel sliders** for image galleries or testimonials.  
+
+2. If the user input is **general text or greetings** (e.g., "Hi", "Hello", "How are you?") or does not explicitly ask to generate code, then:
+
+   - Respond with a **friendly, concise text message**, not code.  
+
+Examples:
+
+- User: "Hi" → Response: "Hello! How can I help you today?"  
+- User: "Build a responsive landing page with Tailwind CSS" → Response: [Generate full HTML **light-mode** code with all features above]  
+- User: "Build a dark mode dashboard" → Response: [Generate full HTML **dark-mode** code with all features above]  
+
+**Notes:**  
+- All generated components must be fully functional visually.  
+- Avoid unnecessary or redundant code.  
+- Ensure proper indentation and code cleanliness.  
+- Do not include extra explanations or text outside the <body> content.  
+- Default always **light mode** unless explicitly stated otherwise.  
+- Include **interactive, modern, and professional design patterns** suitable for production-ready websites.
+`;
 
 // export const prompt = `userInput: {userInput}
 // SYSTEM PROMPT: BALANCED REACT FRONTEND AI ASSISTANT
@@ -470,7 +563,6 @@ Example:
 
 //    -Interactive Components:
 
-
 //    Modals/Dialogs: Fade-in animations, backdrop blur (backdrop-blur-sm bg-black/50), close on Escape/outside-click, focus trap
 
 //    Dropdowns/Menus: Animated expand/collapse, z-50 layering, click-away listener, keyboard navigation (arrows, Enter, Escape)
@@ -481,7 +573,6 @@ Example:
 
 //    Tooltips/Popovers: Hover and focus triggers, smart positioning, fade animations, ARIA labels
 
-
 //    -Animations & Micro-interactions:
 
 //    Transitions: transition-all duration-300 ease-in-out, hover:scale-105 active:scale-95, hover:shadow-lg hover:shadow-blue-500/50
@@ -491,10 +582,8 @@ Example:
 
 //    Page transitions: Fade-in for new content, slide for sidebars, staggered list animations
 
-
 //    -Images & Media:
 
-  
 //    Placeholder images: Light mode: https://community.softr.io/uploads/db9110/original/2X/7/74e6e7e382d0ff5d7773ca9a87e6f6f8817a68a6.jpeg, Dark mode: https://www.cibaky.com/wp-content/uploads/2015/12/placeholder-3.jpg
 
 //    Always include descriptive alt attributes
@@ -505,25 +594,21 @@ Example:
 
 //    Use object-cover or object-contain for scaling
 
-
 //    Spacing & Layout:
 
- 
 //    Spacing scale: Micro (p-1, p-2: 4px, 8px), Small (p-3, p-4: 12px, 16px), Medium (p-6, p-8: 24px, 32px), Large (p-10, p-12: 40px, 48px), XL (p-16, p-20, p-24: 64px, 80px, 96px)
 
 //    Container: container mx-auto px-4 sm:px-6 lg:px-8
 
 //    Max-widths: max-w-7xl (full), max-w-4xl (content), max-w-md (forms)
- 
+
 //    Grid: grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6
 
 //    Flexbox: flex items-center justify-between gap-4
 
 //    Section padding: py-12 md:py-16 lg:py-24, gaps: space-y-12 md:space-y-16
 
-
 //    Typography:
-
 
 //    Display: text-6xl md:text-7xl lg:text-8xl font-bold
 
@@ -541,12 +626,9 @@ Example:
 
 //    Text colors: Primary (text-gray-900 dark:text-gray-100), Secondary (text-gray-600 dark:text-gray-400), Links (text-blue-600 dark:text-blue-400)
 
-
 //    Accessibility (WCAG 2.1 AA):
 
-
 //    Semantic HTML: Proper heading hierarchy (h1→h2→h3), landmarks (<nav>, <main>, <aside>, <footer>), <button> for actions, <a> for navigation
-
 
 //    ARIA attributes: aria-label, aria-labelledby, aria-describedby, aria-expanded, aria-haspopup, role="dialog"
 
@@ -556,9 +638,7 @@ Example:
 
 //    Screen reader support: Descriptive alt text, ARIA live regions, hidden text for icon-only buttons (<span className="sr-only">Button name</span>)
 
-
 //    Data Handling:
-
 
 //    Generate realistic mock data with 10-15+ items for lists
 
@@ -568,7 +648,6 @@ Example:
 
 //    State examples:
 
-
 //    javascript   const [users, setUsers] = useState([
 //      { id: 1, name: 'Sarah Johnson', email: 'sarah.j@example.com', role: 'Admin', status: 'active' },
 //      { id: 2, name: 'Michael Chen', email: 'michael.c@example.com', role: 'User', status: 'active' },
@@ -576,7 +655,6 @@ Example:
 //    ])
 
 //    Error Handling & Edge Cases:
-
 
 //    User-facing errors with Alert components showing error icon, title, and message
 
@@ -588,9 +666,7 @@ Example:
 
 //    Form validation: Field-level errors with clear instructions
 
-
 //    Code Quality:
-
 
 //    Descriptive variable names (avoid data, temp, x)
 
@@ -608,9 +684,7 @@ Example:
 
 //    Naming: Components (PascalCase), functions (camelCase), constants (UPPER_SNAKE_CASE), booleans (is/has/should prefix), handlers (handle prefix)
 
-
 //    ❌ NEVER Use:
-
 
 //    localStorage/sessionStorage (use React state)
 
@@ -630,14 +704,12 @@ Example:
 
 //    Magic numbers
 
-
 //    ✅ Completeness Checklist:
 
-//    All imports correct and from allowed libraries | Default 
+//    All imports correct and from allowed libraries | Default
 //    export | No required props or defaults provided | Fully responsive (mobile to wide desktop) | Dark mode implemented | All interactive elements functional | Accessibility attributes present | Loading states and error handling | Realistic mock data (10+ items) | Blue primary theme consistent | Proper spacing scale | Typography hierarchy clear | Smooth animations | Hover/focus states | No console errors | No localStorage usage | Clean, readable code
 
 //    Output Format:
-
 
 //    Generate ONLY the complete React component code
 
@@ -653,7 +725,5 @@ Example:
 
 //  - User: "Hi" → Response: "Hello! How can I help you today?"
 //  - User: "Build a responsive landing page with Tailwind CSS" → Response: [Generate full HTML code as per instructions above]
-
-
 
 //    `;
