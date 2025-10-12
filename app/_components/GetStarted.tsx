@@ -9,7 +9,7 @@ const GetStarted = () => {
   return (
     <>
       {!user ? (
-        <SignInButton mode="redirect" forceRedirectUrl={"/workspaces"}>
+        <SignInButton mode="redirect" forceRedirectUrl={"/workspace"}>
           <Button>
             Get Started <ArrowRight />
           </Button>
