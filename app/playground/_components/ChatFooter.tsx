@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
@@ -21,34 +21,46 @@ const ChatFooter = ({ onSend }: ChatFooterProps) => {
     }
   }, [input]);
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed) return;
     onSend(trimmed);
     setInput("");
-  };
+  }, [input, onSend]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    },
+    [handleSend]
+  );
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
       e.preventDefault();
       handleSend();
-    }
-  };
+    },
+    [handleSend]
+  );
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInput(e.target.value);
+    },
+    []
+  );
 
   return (
-    <div className="border-t bg-white p-3 mt-5 ">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSend();
-        }}
-        className="relative flex items-end"
-      >
+    <div className="border-t bg-white p-3 mt-5">
+      <form onSubmit={handleSubmit} className="relative flex items-end">
         {/* Textarea */}
         <textarea
           ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Describe your project idea here..."
           className={clsx(
@@ -79,5 +91,4 @@ const ChatFooter = ({ onSend }: ChatFooterProps) => {
   );
 };
 
-export default ChatFooter;
-
+export default memo(ChatFooter);
