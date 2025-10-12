@@ -1,11 +1,11 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Image as ImageIcon,
   Crop,
-  Expand,
-  Image as ImageUpscale, // no lucide-react upscale, using Image icon
+  Image as ImageUpscale,
   ImageMinus,
+  Loader2Icon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,30 @@ type Props = {
 };
 
 const transformOptions = [
-  { label: "Smart Crop", value: "smartcrop", icon: <Crop /> },
-  { label: "Resize", value: "resize", icon: <Expand /> },
-  { label: "Upscale", value: "upscale", icon: <ImageUpscale /> },
-  { label: "BG Remove", value: "bgremove", icon: <ImageMinus /> },
+  {
+    label: "Smart Crop",
+    value: "smartcrop",
+    icon: <Crop />,
+    transformation: "fo-auto",
+  },
+  {
+    label: "Dropshadow",
+    value: "dropshadow",
+    icon: <ImageIcon />,
+    transformation: "e-dropshadow",
+  },
+  {
+    label: "Upscale",
+    value: "upscale",
+    icon: <ImageUpscale />,
+    transformation: "e-upscale",
+  },
+  {
+    label: "BG Remove",
+    value: "bgremove",
+    icon: <ImageMinus />,
+    transformation: "e-bgremove",
+  },
 ];
 
 function ImageSettingSection({ selectedEl }: Props) {
@@ -37,29 +57,93 @@ function ImageSettingSection({ selectedEl }: Props) {
   const [preview, setPreview] = useState(selectedEl.src || "");
   const [activeTransforms, setActiveTransforms] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Toggle transform
-  const toggleTransform = (value: string) => {
-    setActiveTransforms((prev) =>
-      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
-    );
-  };
-
-  
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setSelectedImage(file);
+      // Use object URL instead of base64 to avoid large strings
+      const objectUrl = URL.createObjectURL(file);
+      setPreview(objectUrl);
+      
+      // Cleanup old object URL when component unmounts
+      return () => URL.revokeObjectURL(objectUrl);
     }
   };
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
+  };
+
+  const saveUploadedFile = async () => {
+    if (!selectedImage) return;
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedImage);
+      formData.append("fileName", `${Date.now()}.png`);
+      formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
+
+      // Call your API route to upload (you'll need to create this)
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      const imageUrl = data.url + "?tr=";
+      
+      selectedEl.setAttribute("src", imageUrl);
+      setPreview(imageUrl);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const GenerateAiImage = () => {
+    if (!altText.trim()) {
+      alert("Please enter a prompt first");
+      return;
+    }
+    
+    setLoading(true);
+    const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+    const url = `${urlEndpoint}/ik-genimg-prompt-${encodeURIComponent(altText)}/${Date.now()}.png?tr=`;
+
+    setPreview(url);
+    selectedEl.setAttribute("src", url);
+  };
+
+  const ApplyTransformation = (trValue: string) => {
+    setLoading(true);
+    if (!preview.includes(trValue)) {
+      const url = preview + trValue + ",";
+      setPreview(url);
+      selectedEl.setAttribute("src", url);
+    } else {
+      const url = preview.replace(trValue + ",", "");
+      setPreview(url);
+      selectedEl.setAttribute("src", url);
+    }
   };
 
   return (
@@ -75,6 +159,7 @@ function ImageSettingSection({ selectedEl }: Props) {
           alt={altText}
           className="max-h-40 object-contain border rounded cursor-pointer hover:opacity-80"
           onClick={openFileDialog}
+          onLoad={() => setLoading(false)}
         />
       </div>
 
@@ -92,9 +177,11 @@ function ImageSettingSection({ selectedEl }: Props) {
         type="button"
         variant="outline"
         className="w-full"
-        onClick={openFileDialog}
+        onClick={saveUploadedFile}
+        disabled={loading || !selectedImage}
       >
-        Upload Image
+        {loading && <Loader2Icon className="animate-spin mr-2" />} Upload
+        Image
       </Button>
 
       {/* Alt text */}
@@ -104,12 +191,15 @@ function ImageSettingSection({ selectedEl }: Props) {
           type="text"
           value={altText}
           onChange={(e) => setAltText(e.target.value)}
-          placeholder="Enter alt text"
+          placeholder="Enter prompt for AI image"
           className="mt-1"
         />
       </div>
 
-      <Button className="w-full">Generate AI Image</Button>
+      <Button className="w-full" onClick={GenerateAiImage} disabled={loading}>
+        {loading && <Loader2Icon className="animate-spin mr-2" />}
+        Generate AI Image
+      </Button>
 
       {/* Transform Buttons */}
       <div>
@@ -117,7 +207,7 @@ function ImageSettingSection({ selectedEl }: Props) {
         <div className="flex gap-2 flex-wrap">
           <TooltipProvider>
             {transformOptions.map((opt) => {
-              const applied = activeTransforms.includes(opt.value);
+              const applied = preview.includes(opt.transformation);
               return (
                 <Tooltip key={opt.value}>
                   <TooltipTrigger asChild>
@@ -125,7 +215,8 @@ function ImageSettingSection({ selectedEl }: Props) {
                       type="button"
                       variant={applied ? "default" : "outline"}
                       className="flex items-center justify-center p-2"
-                      onClick={() => toggleTransform(opt.value)}
+                      onClick={() => ApplyTransformation(opt.transformation)}
+                      disabled={loading}
                     >
                       {opt.icon}
                     </Button>
