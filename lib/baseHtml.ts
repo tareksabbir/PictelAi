@@ -9,8 +9,10 @@ export const baseHtml = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet">
           <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-          <script src="https://unpkg.com/lucide@latest"></script>
+          
+          <!-- Iconify - Best icon library for web projects -->
+          <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+          
           <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
           <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
           <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
