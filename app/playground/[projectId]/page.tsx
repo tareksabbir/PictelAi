@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import PlaygroundHeader from "../_components/PlaygroundHeader";
 import ChatSection from "../_components/ChatSection";
 import WebsiteDesign from "../_components/WebsiteDesign";
-// import ElementSettingSection from "../_components/ElementSettingSection";
 import { prompt } from "@/lib/aiPromt";
 
 type Messages = {
@@ -36,14 +35,7 @@ const PlayGround = () => {
   const [generatedCode, setGeneratedCode] = useState<string>("");
 
   // ---------------------- Fetch Frame Details ----------------------
-  useEffect(() => {
-    if (frameId && projectId) {
-      GetFrameDetails();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameId, projectId]);
-
-  const GetFrameDetails = async () => {
+  const GetFrameDetails = useCallback(async () => {
     try {
       const result = await axios.get(`/api/frames?frameId=${frameId}&projectId=${projectId}`);
       const data = result.data;
@@ -68,100 +60,125 @@ const PlayGround = () => {
       console.error("Error fetching frame details:", error);
       toast.error("Failed to load frame details");
     }
-  };
+  }, [frameId, projectId]);
 
-  // ---------------------- Handle User Message ----------------------
-  const SendMessage = async (userInput: string) => {
-    setLoading(true);
-    const newUserMsg = { role: "user", content: userInput };
-    setMessages((prev) => [...prev, newUserMsg]);
-
-    try {
-      const response = await fetch("/api/ai-model", {
-        method: "POST",
-        body: JSON.stringify({
-          messages: [
-            ...messages,
-            { role: "user", content: prompt.replace("{userInput}", userInput) },
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("AI model response error");
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      let aiResponse = "";
-      let isCode = false;
-
-      while (true) {
-        const { value, done } = await reader?.read()!;
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        aiResponse += chunk;
-
-        // Stream code updates to iframe in real-time
-        if (!isCode && aiResponse.includes("```html")) {
-          isCode = true;
-          const index = aiResponse.indexOf("```html") + 7;
-          const initialCodeChunk = aiResponse.slice(index);
-          setGeneratedCode((prev) => prev + initialCodeChunk);
-        } else if (isCode) {
-          setGeneratedCode((prev) => prev + chunk);
-        }
-      }
-
-      // Save generated code to DB
-      await saveGeneratedCode(aiResponse);
-
-      // Update chat messages
-      if (!isCode) {
-        setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "Your code is ready below!" },
-        ]);
-      }
-    } catch (error) {
-      console.error("SendMessage error:", error);
-      toast.error("Failed to generate response");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (frameId && projectId) {
+      GetFrameDetails();
     }
-  };
+  }, [frameId, projectId, GetFrameDetails]);
+
+  // ---------------------- Save Messages ----------------------
+  const saveMessages = useCallback(
+    async (messagesToSave: Messages[]) => {
+      try {
+        await axios.put("/api/chats", { messages: messagesToSave, frameId });
+      } catch (error) {
+        console.error("Failed to save messages:", error);
+      }
+    },
+    [frameId]
+  );
+
+  const saveGeneratedCode = useCallback(
+    async (code: string) => {
+      try {
+        await axios.put("/api/frames", {
+          designCode: code,
+          frameId,
+          projectId,
+        });
+        toast.success("Website designed successfully!");
+      } catch (error) {
+        console.error("Failed to save generated code:", error);
+      }
+    },
+    [frameId, projectId]
+  );
 
   // ---------------------- Auto-Save Messages ----------------------
   useEffect(() => {
     if (messages.length > 0) {
-      saveMessages();
+      saveMessages(messages);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
+  }, [messages, saveMessages]);
 
-  const saveMessages = async () => {
-    try {
-      await axios.put("/api/chats", { messages, frameId });
-    } catch (error) {
-      console.error("Failed to save messages:", error);
-    }
-  };
+  // ---------------------- Handle User Message ----------------------
+  const SendMessage = useCallback(
+    async (userInput: string) => {
+      setLoading(true);
+      const newUserMsg = { role: "user", content: userInput };
+      
+      // Update messages optimistically
+      setMessages((prev) => [...prev, newUserMsg]);
 
-  const saveGeneratedCode = async (code: string) => {
-    try {
-      await axios.put("/api/frames", {
-        designCode: code,
-        frameId,
-        projectId,
-      });
-      toast.success("Website designed successfully!");
-    } catch (error) {
-      console.error("Failed to save generated code:", error);
-    }
-  };
+      try {
+        const response = await fetch("/api/ai-model", {
+          method: "POST",
+          body: JSON.stringify({
+            messages: [
+              ...messages,
+              { role: "user", content: prompt.replace("{userInput}", userInput) },
+            ],
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("AI model response error");
+        }
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        let aiResponse = "";
+        let isCode = false;
+
+        while (true) {
+          const { value, done } = await reader?.read()!;
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          aiResponse += chunk;
+
+          // Stream code updates to iframe in real-time
+          if (!isCode && aiResponse.includes("```html")) {
+            isCode = true;
+            const index = aiResponse.indexOf("```html") + 7;
+            const initialCodeChunk = aiResponse.slice(index);
+            setGeneratedCode((prev) => prev + initialCodeChunk);
+          } else if (isCode) {
+            setGeneratedCode((prev) => prev + chunk);
+          }
+        }
+
+        // Save generated code to DB
+        await saveGeneratedCode(aiResponse);
+
+        // Update chat messages
+        if (!isCode) {
+          setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }]);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: "Your code is ready below!" },
+          ]);
+        }
+      } catch (error) {
+        console.error("SendMessage error:", error);
+        toast.error("Failed to generate response");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [messages, saveGeneratedCode]
+  );
+
+  // Memoize the onSend callback to prevent ChatSection re-renders
+  const handleSend = useCallback(
+    (input: string) => {
+      SendMessage(input);
+    },
+    [SendMessage]
+  );
 
   return (
     <section>
@@ -169,11 +186,10 @@ const PlayGround = () => {
       <div className="flex">
         <ChatSection
           messages={messages}
-          onSend={(input: string) => SendMessage(input)}
+          onSend={handleSend}
           loading={loading}
         />
         <WebsiteDesign generatedCode={generatedCode} />
-        {/* <ElementSettingSection /> */}
       </div>
     </section>
   );
