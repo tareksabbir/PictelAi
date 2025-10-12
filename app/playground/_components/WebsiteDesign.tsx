@@ -1,9 +1,20 @@
 "use client";
-import React, { useEffect, useRef, useState, memo, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  memo,
+  useCallback,
+  useContext,
+} from "react";
 import { baseHtml } from "@/lib/baseHtml";
 import WebPageTools from "./WebPageTools";
 import ElementSettingSection from "./ElementSettingSection";
 import ImageSettingSection from "./ImageSettingSection";
+import { OnSaveContext } from "@/context/OnSaveContext";
+import axios from "axios";
+import { toast } from "sonner";
+import { useParams, useSearchParams } from "next/navigation";
 
 type Props = {
   generatedCode: string;
@@ -20,11 +31,17 @@ declare global {
 }
 
 const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
+  const { onSaveData, setOnSaveData } = useContext(OnSaveContext);
+  const { projectId } = useParams();
+  const params = useSearchParams();
+  const frameId = params.get("frameId");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedScreenSize, setSelectedScreenSize] = useState<string>("web");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const prevCodeRef = useRef<string>("");
-  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(
+    null
+  );
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize iframe shell once
@@ -42,7 +59,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
   useEffect(() => {
     // Skip if code hasn't changed or is empty
     if (!generatedCode || prevCodeRef.current === generatedCode) return;
-    
+
     // Clear any pending initialization
     if (initTimeoutRef.current) {
       clearTimeout(initTimeoutRef.current);
@@ -50,7 +67,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
     prevCodeRef.current = generatedCode;
     setIsLoading(true);
-    
+
     const iframe = iframeRef.current;
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
@@ -105,47 +122,50 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
         // Chart.js
         if (win.Chart) {
-          doc.querySelectorAll("canvas[data-chart='true']").forEach((canvas) => {
-            if (!(canvas instanceof HTMLCanvasElement)) return;
-            if (canvas.dataset.inited) return;
-            
-            canvas.dataset.inited = "true";
+          doc
+            .querySelectorAll("canvas[data-chart='true']")
+            .forEach((canvas) => {
+              if (!(canvas instanceof HTMLCanvasElement)) return;
+              if (canvas.dataset.inited) return;
 
-            let labels = ["Red", "Blue", "Green"];
-            let data = [12, 19, 3];
+              canvas.dataset.inited = "true";
 
-            try {
-              if (canvas.dataset.labels) labels = JSON.parse(canvas.dataset.labels);
-              if (canvas.dataset.data) data = JSON.parse(canvas.dataset.data);
-            } catch (err) {
-              console.error("Chart parse error:", err);
-            }
+              let labels = ["Red", "Blue", "Green"];
+              let data = [12, 19, 3];
 
-            try {
-              new win.Chart(canvas.getContext("2d"), {
-                type: canvas.dataset.type || "bar",
-                data: {
-                  labels,
-                  datasets: [
-                    {
-                      label: "Data",
-                      data,
-                      backgroundColor: "rgba(59,130,246,0.7)",
-                    },
-                  ],
-                },
-                options: {
-                  responsive: true,
-                  plugins: {
-                    legend: { display: true },
-                    tooltip: { enabled: true },
+              try {
+                if (canvas.dataset.labels)
+                  labels = JSON.parse(canvas.dataset.labels);
+                if (canvas.dataset.data) data = JSON.parse(canvas.dataset.data);
+              } catch (err) {
+                console.error("Chart parse error:", err);
+              }
+
+              try {
+                new win.Chart(canvas.getContext("2d"), {
+                  type: canvas.dataset.type || "bar",
+                  data: {
+                    labels,
+                    datasets: [
+                      {
+                        label: "Data",
+                        data,
+                        backgroundColor: "rgba(59,130,246,0.7)",
+                      },
+                    ],
                   },
-                },
-              });
-            } catch (err) {
-              console.error("Chart render error:", err);
-            }
-          });
+                  options: {
+                    responsive: true,
+                    plugins: {
+                      legend: { display: true },
+                      tooltip: { enabled: true },
+                    },
+                  },
+                });
+              } catch (err) {
+                console.error("Chart render error:", err);
+              }
+            });
         }
 
         // Hide loading with smooth transition
@@ -259,6 +279,49 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     setSelectedScreenSize(size);
   }, []);
 
+  useEffect(() => {
+    onSaveData && onSaveCode();
+  }, [onSaveData]);
+
+  const saveGeneratedCode = useCallback(
+    async (code: string) => {
+      try {
+        await axios.put("/api/frames", {
+          designCode: code,
+          frameId,
+          projectId,
+        });
+        toast.success("Website saved successfully!");
+      } catch (error) {
+        console.error("Failed to save generated code:", error);
+      }
+    },
+    [frameId, projectId]
+  );
+
+  const onSaveCode = async () => {
+    if (iframeRef.current) {
+      try {
+        const iframeDoc =
+          iframeRef.current.contentDocument ||
+          iframeRef.current.contentWindow?.document;
+        if (iframeDoc) {
+          const cloneDoc = iframeDoc.documentElement.cloneNode(
+            true
+          ) as HTMLElement;
+          const allelements = cloneDoc.querySelectorAll<HTMLElement>("*");
+          allelements.forEach((element) => {
+            element.style.outline = "";
+            element.style.cursor = "";
+          });
+          const html = cloneDoc.outerHTML;
+          console.log(html);
+          saveGeneratedCode(html);
+        }
+      } catch (error) {}
+    }
+  };
+
   return (
     <section className="w-full flex flex-col items-center p-4">
       <div className="w-full flex gap-4">
@@ -353,7 +416,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
             }`}
             sandbox="allow-scripts allow-same-origin"
           />
-          
+
           <WebPageTools
             selectedScreenSize={selectedScreenSize}
             setSelectedScreenSize={handleScreenSizeChange}
