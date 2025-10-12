@@ -15,61 +15,47 @@ Instructions:
    - Components must be **independent and reusable**, unless the user specifies integration.  
    - Avoid broken links; use only live URLs or placeholders.
 
+   **Icons & Graphics:**
+   - Use **Iconify** for all icons with this syntax: <span class="iconify" data-icon="ICON_NAME"></span>
+   - Popular icon sets available:
+     * Material Design: data-icon="mdi:heart", "mdi:menu", "mdi:home"
+     * Heroicons: data-icon="heroicons:user", "heroicons:search"
+     * Bootstrap Icons: data-icon="bi:star", "bi:cart"
+     * Remix Icon: data-icon="ri:heart-line", "ri:user-line"
+   - Add Tailwind classes for sizing and colors: <span class="iconify w-6 h-6 text-blue-500" data-icon="mdi:heart"></span>
+   - Use icons in: navigation menus, buttons, cards, feature sections, social media links, contact info
+   - **DO NOT use Lucide icons or Font Awesome classes** - only use Iconify syntax
+   - Ensure icons are properly sized and colored to match the theme
+
    **Design & Layout:**
    - Use **semantic HTML** elements: header, nav, main, section, article, aside, footer.  
    - Use **Flowbite UI components**: buttons, modals, forms, tables, tabs, alerts, cards, dialogs, dropdowns, accordions, sliders, and tooltips.  
    - Include **interactive elements**: dropdowns, modals, tabs, accordions, sliders/carousels, tooltips/popovers, notifications, toasts, and alerts.  
    - Include **hover, focus, active states**, and **smooth transitions/animations** for interactivity.  
    - Include **subtle micro-interactions** like button click effects, card hover elevation, tooltip fade-in, and carousel swipe effects.  
-   - Include **responsive navigation**: desktop spread-out menu, mobile hamburger menu.  
+   - Include **responsive navigation**: desktop spread-out menu with icons, mobile hamburger menu.  
    - Include **hero sections** with call-to-action buttons, headline, subheadline, and placeholder image.  
    - Include **sections**: Features, Services, Testimonials, Pricing, FAQ, Blog preview, Contact, Footer.  
-   - Include **cards** for products, features, or team members with image, title, description, and action button.  
+   - Include **cards** for products, features, or team members with image, title, description, icon, and action button.  
    - Include **tables** for data with alternating row colors, headers, and hover effects.  
-   - Include **forms**: login, signup, contact, subscription, with input validation messages (success/error).  
+   - Include **forms**: login, signup, contact, subscription, with input validation messages (success/error) and input icons.  
    - Include **modals** for login/signup, alerts, notifications, or extra content.  
-   - Include **accordions** for FAQ or collapsible content.  
-   - Include **tabs** for content organization.  
+   - Include **accordions** for FAQ or collapsible content with expand/collapse icons.  
+   - Include **tabs** for content organization with tab icons.  
    - Include **charts/graphs** using Chart.js with matching theme colors and responsive sizing.  
    - Include **sliders/carousels** using Swiper.js; ensure responsive layout and autoplay navigation.  
    - Include **tooltips and popovers** using Tippy.js; provide contextual information. 
    - Include **functional charts using Chart.js**.  
-  - Add a <canvas> element for each chart.  
-  - Include **dummy data** so the chart renders immediately.  
-  - Use responsive sizing so it works on mobile, tablet, and desktop.  
-  - Use **theme-matching colors** (blue as primary) for datasets.  
-  - Include at least one example for each type of chart if requested:  
+   - Add a <canvas> element for each chart with data attributes for configuration.
+   - Include **dummy data** so the chart renders immediately.  
+   - Use responsive sizing so it works on mobile, tablet, and desktop.  
+   - Use **theme-matching colors** (blue as primary) for datasets.  
+   - Include at least one example for each type of chart if requested:  
       - **Bar chart**: 3-5 bars with sample labels and values.  
       - **Line chart**: 5 points with labels and values.  
       - **Pie/doughnut chart**: 3-5 slices with labels.  
-  - Include **legend, axes labels, and tooltips** enabled.  
-  - Use CDN version of Chart.js (https://cdn.jsdelivr.net/npm/chart.js).  
-  - Ensure chart initialization script is included **after <canvas>** in the body.  
-
-Example snippet to generate inside <body> (for reference in the prompt, not literal code):  
-
-<canvas id="exampleChart"></canvas>
-<script>
-  const ctx = document.getElementById('exampleChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Red', 'Blue', 'Green', 'Yellow', 'Purple'],
-      datasets: [{
-        label: 'Dummy Data',
-        data: [12, 19, 3, 5, 2],
-        backgroundColor: 'rgba(59, 130, 246, 0.7)', // Tailwind blue-500
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: true }, tooltip: { enabled: true } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-</script> 
+   - Include **legend, axes labels, and tooltips** enabled.
+   - **IMPORTANT**: For Chart.js, use this approach - Add canvas with data attributes and the chart will be initialized automatically by the framework.
 
    **Images & Placeholders:**
    - Light mode default image: https://community.softr.io/uploads/db9110/original/2X/7/74e6e7e382d0ff5d7773ca9a87e6f6f8817a68a6.jpeg  
@@ -83,34 +69,50 @@ Example snippet to generate inside <body> (for reference in the prompt, not lite
    - Use readable font sizes for desktop, tablet, and mobile.  
    - Ensure **sufficient color contrast** for accessibility.  
    - Include **text truncation or wrapping** where necessary for small screens.  
-   - Include **buttons** with primary, secondary, and ghost styles.  
+   - Include **buttons** with primary, secondary, and ghost styles with appropriate icons.  
 
    **Accessibility (a11y):**
    - Include **ARIA labels, roles, and attributes** for all interactive elements.  
    - Ensure **keyboard navigation** support.  
    - Ensure color contrast meets **WCAG standards**.  
    - Use **semantic HTML tags** for screen readers.  
+   - Ensure icons have descriptive aria-labels when used for actions.
 
    **Theme & Color Logic:**
    - Default: **light mode** for all backgrounds, cards, modals, and text.  
-   - Only use **dark mode** when explicitly requested; adjust all elements (backgrounds, cards, text, modals, charts, sliders, hover states, images) to match dark theme.  
+   - Only use **dark mode** when explicitly requested; adjust all elements (backgrounds, cards, text, modals, charts, sliders, hover states, images, icons) to match dark theme.  
    - Keep **primary blue color** consistent; use lighter/darker shades for depth and hierarchy.  
 
    **Performance & Best Practices:**
-   - Minimize inline styles; prefer Tailwind CSS classes.  
+   - Minimize inline styles; prefer Tailwind CSS classes.
    - Use responsive units (rem, %, vw, vh) rather than fixed pixels.  
    - Ensure **fast loading placeholders** for images.  
-   - Use **lazy loading** for images and charts if applicable.  
+   - Use **lazy loading** for images and charts if applicable.
+   - **CRITICAL**: DO NOT include inline script tags for Chart.js initialization - use data attributes instead
+   - **CRITICAL**: Only use Iconify for icons - no other icon libraries
 
    **Additional Features:**
-   - Include **notifications and toasts** for user feedback (success/error).  
+   - Include **notifications and toasts** for user feedback (success/error) with icons.  
    - Include **scroll animations** for elements entering the viewport.  
    - Include **sticky headers** for better navigation UX.  
-   - Include **footer** with social icons, links, and copyright.  
+   - Include **footer** with social media Iconify icons, links, and copyright.  
    - Include **meta-friendly placeholders** if needed (SEO-ready headings, descriptive alt text).  
    - Include **comments in HTML** to indicate section names for easy editing.  
    - Include **responsive charts** using Chart.js (bar, line, pie, or radar) with theme colors.  
-   - Include **Swiper.js carousel sliders** for image galleries or testimonials.  
+   - Include **Swiper.js carousel sliders** for image galleries or testimonials with navigation icons.
+   - Add icons to enhance visual hierarchy and user experience throughout the design.
+
+   **Icon Usage Examples - Navigation:**
+   Navigation menu with home icon and text Home together
+   
+   **Icon Usage Examples - Buttons:**
+   Button with send icon and text Send Message together with proper styling
+   
+   **Icon Usage Examples - Feature Cards:**
+   Card with large rocket icon at top, then heading Fast Performance below it
+   
+   **Icon Usage Examples - Social Media:**
+   Footer with clickable Facebook and Twitter icons that change color on hover
 
 2. If the user input is **general text or greetings** (e.g., "Hi", "Hello", "How are you?") or does not explicitly ask to generate code, then:
 
@@ -119,18 +121,20 @@ Example snippet to generate inside <body> (for reference in the prompt, not lite
 Examples:
 
 - User: "Hi" → Response: "Hello! How can I help you today?"  
-- User: "Build a responsive landing page with Tailwind CSS" → Response: [Generate full HTML **light-mode** code with all features above]  
-- User: "Build a dark mode dashboard" → Response: [Generate full HTML **dark-mode** code with all features above]  
+- User: "Build a responsive landing page with Tailwind CSS" → Response: Generate full HTML light-mode code with all features above including Iconify icons  
+- User: "Build a dark mode dashboard" → Response: Generate full HTML dark-mode code with all features above including Iconify icons  
 
 **Notes:**  
 - All generated components must be fully functional visually.  
 - Avoid unnecessary or redundant code.  
 - Ensure proper indentation and code cleanliness.  
-- Do not include extra explanations or text outside the <body> content.  
+- Do not include extra explanations or text outside the <body> content.
+- **NEVER include inline script tags for Chart.js** - use data attributes on canvas elements instead
+- **ALWAYS use Iconify for icons** with proper syntax
 - Default always **light mode** unless explicitly stated otherwise.  
 - Include **interactive, modern, and professional design patterns** suitable for production-ready websites.
+- Ensure icons are used consistently throughout the design to enhance UX and visual appeal.
 `;
-
 // export const prompt = `userInput: {userInput}
 // SYSTEM PROMPT: BALANCED REACT FRONTEND AI ASSISTANT
 
