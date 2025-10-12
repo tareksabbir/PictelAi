@@ -9,8 +9,10 @@ export const htmlContentFunction = (cleanedCode: string) => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet">
           <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-          <script src="https://unpkg.com/lucide@latest"></script>
+          
+          <!-- Iconify - Universal icon framework -->
+          <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+          
           <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
           <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
           <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
@@ -27,11 +29,6 @@ export const htmlContentFunction = (cleanedCode: string) => {
           <script>
             // Initialize libraries after DOM is loaded
             window.addEventListener('load', function() {
-              // Lucide icons
-              if (window.lucide) {
-                lucide.createIcons();
-              }
-              
               // AOS animations
               if (window.AOS) {
                 AOS.init();
@@ -97,5 +94,5 @@ export const htmlContentFunction = (cleanedCode: string) => {
           </script>
         </body>
       </html>
-    `
+    `;
 };
