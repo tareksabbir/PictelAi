@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
@@ -33,6 +33,11 @@ const PlayGround = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [messages, setMessages] = useState<Messages[]>([]);
   const [generatedCode, setGeneratedCode] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // Refs for debouncing and buffering
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const codeBufferRef = useRef<string>("");
 
   // ---------------------- Fetch Frame Details ----------------------
   const GetFrameDetails = useCallback(async () => {
@@ -103,18 +108,63 @@ const PlayGround = () => {
     }
   }, [messages, saveMessages]);
 
+  // ---------------------- Debounced Code Update ----------------------
+  const updateGeneratedCodeDebounced = useCallback((newCode: string) => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Buffer the code
+    codeBufferRef.current = newCode;
+
+    // Set new timer - update after 500ms of no new chunks
+    debounceTimerRef.current = setTimeout(() => {
+      setGeneratedCode(codeBufferRef.current);
+    }, 500);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // ---------------------- Extract Code from Response ----------------------
+  const extractCode = (text: string): string => {
+    const codeMatch = text.match(/```html\n?([\s\S]*?)```/);
+    if (codeMatch) {
+      return codeMatch[1].trim();
+    }
+    return text.replaceAll("```html", "").replaceAll("```", "").trim();
+  };
+
   // ---------------------- Handle User Message ----------------------
   const SendMessage = useCallback(
-    async (userInput: string) => {
+    async (userInput: string, retryCount = 0) => {
+      const MAX_RETRIES = 2;
+      
       setLoading(true);
+      setIsGenerating(true);
+      
       const newUserMsg = { role: "user", content: userInput };
       
-      // Update messages optimistically
-      setMessages((prev) => [...prev, newUserMsg]);
+      // Only add user message if this is the first attempt
+      if (retryCount === 0) {
+        setMessages((prev) => [...prev, newUserMsg]);
+      }
+
+      let fullAiResponse = "";
 
       try {
         const response = await fetch("/api/ai-model", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             messages: [
               ...messages,
@@ -124,55 +174,95 @@ const PlayGround = () => {
         });
 
         if (!response.ok) {
-          throw new Error("AI model response error");
+          const errorText = await response.text();
+          throw new Error(`AI model response error: ${response.status} - ${errorText}`);
         }
 
-        const reader = response.body?.getReader();
+        if (!response.body) {
+          throw new Error("Response body is empty");
+        }
+
+        const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
-        let aiResponse = "";
-        let isCode = false;
-
         while (true) {
-          const { value, done } = await reader?.read()!;
+          const { value, done } = await reader.read();
           if (done) break;
+          
           const chunk = decoder.decode(value, { stream: true });
-          aiResponse += chunk;
+          fullAiResponse += chunk;
 
-          // Stream code updates to iframe in real-time
-          if (!isCode && aiResponse.includes("```html")) {
-            isCode = true;
-            const index = aiResponse.indexOf("```html") + 7;
-            const initialCodeChunk = aiResponse.slice(index);
-            setGeneratedCode((prev) => prev + initialCodeChunk);
-          } else if (isCode) {
-            setGeneratedCode((prev) => prev + chunk);
+          // Debounced update for preview (only if contains code)
+          if (fullAiResponse.includes("```html")) {
+            const extractedCode = extractCode(fullAiResponse);
+            if (extractedCode) {
+              updateGeneratedCodeDebounced(extractedCode);
+            }
           }
         }
 
-        // Save generated code to DB
-        await saveGeneratedCode(aiResponse);
+        // Final update - ensure we have the complete code
+        const finalCode = extractCode(fullAiResponse);
+        
+        if (finalCode && finalCode.length > 50) {
+          // Clear any pending debounce and update immediately
+          if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+          }
+          setGeneratedCode(finalCode);
+          
+          // Save to DB
+          await saveGeneratedCode(fullAiResponse);
 
-        // Update chat messages
-        if (!isCode) {
-          setMessages((prev) => [...prev, { role: "assistant", content: aiResponse }]);
-        } else {
+          // Add success message to chat
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: "Your code is ready below!" },
+            { role: "assistant", content: "Your website has been generated successfully! 🎉" },
           ]);
+        } else {
+          // No code, just text response
+          setMessages((prev) => [...prev, { role: "assistant", content: fullAiResponse }]);
         }
       } catch (error) {
         console.error("SendMessage error:", error);
-        toast.error("Failed to generate response");
+        
+        // Retry logic for network errors
+        if (retryCount < MAX_RETRIES && error instanceof Error && 
+            (error.message.includes("Failed to fetch") || error.message.includes("Network"))) {
+          console.log(`Retrying... Attempt ${retryCount + 1}/${MAX_RETRIES}`);
+          toast.error(`Connection failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return SendMessage(userInput, retryCount + 1);
+        }
+        
+        // More specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes("Failed to fetch")) {
+            toast.error("Network error. Please check your connection.");
+          } else if (error.message.includes("AI model response error")) {
+            toast.error("AI service is unavailable. Please try again.");
+          } else {
+            toast.error(error.message || "Failed to generate response");
+          }
+        } else {
+          toast.error("An unexpected error occurred");
+        }
+        
+        // Remove the optimistically added user message on error (only on final failure)
+        if (retryCount === 0) {
+          setMessages((prev) => prev.slice(0, -1));
+        }
       } finally {
         setLoading(false);
+        setIsGenerating(false);
+        codeBufferRef.current = "";
       }
     },
-    [messages, saveGeneratedCode]
+    [messages, saveGeneratedCode, updateGeneratedCodeDebounced]
   );
 
-  // Memoize the onSend callback to prevent ChatSection re-renders
   const handleSend = useCallback(
     (input: string) => {
       SendMessage(input);
@@ -189,10 +279,16 @@ const PlayGround = () => {
           onSend={handleSend}
           loading={loading}
         />
-        <WebsiteDesign generatedCode={generatedCode} />
+        <WebsiteDesign 
+          generatedCode={generatedCode} 
+          isGenerating={isGenerating || loading}
+        />
       </div>
     </section>
   );
 };
 
 export default PlayGround;
+
+
+// http://localhost:3000/playground/9bb06895-a2e0-4700-aab7-3c825a114d97?frameId=1849
