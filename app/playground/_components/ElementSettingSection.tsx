@@ -49,6 +49,27 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
   const [boxShadow, setBoxShadow] = useState<string>("none");
   const [opacity, setOpacity] = useState<string>("1");
 
+  // Helper: safely get className as string
+  const getClassNameString = (element: HTMLElement): string => {
+    if (typeof element.className === 'string') {
+      return element.className;
+    }
+    // For SVG elements, className is an SVGAnimatedString
+    if (element.className && typeof element.className === 'object' && 'baseVal' in element.className) {
+      return (element.className as any).baseVal || '';
+    }
+    return '';
+  };
+
+  // Helper: safely set className
+  const setClassNameString = (element: HTMLElement, classNames: string) => {
+    if (typeof element.className === 'string') {
+      element.className = classNames;
+    } else if (element.className && typeof element.className === 'object' && 'baseVal' in element.className) {
+      (element.className as any).baseVal = classNames;
+    }
+  };
+
   // Helper: apply style to element and keep state in sync
   const applyStyle = (property: string, value: string) => {
     if (!selectedEl) return;
@@ -142,7 +163,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
     setPadding(style.padding || "");
     setMargin(style.margin || "");
     setFontFamily(style.fontFamily || "inherit");
-    setFontWeight(style.fontWeight || (style.fontWeight === "" ? "400" : style.fontWeight));
+    setFontWeight(style.fontWeight || "400");
     setLetterSpacing(style.letterSpacing || "");
     setLineHeight(style.lineHeight || "");
     setBorderStyle(style.borderStyle || "none");
@@ -151,15 +172,17 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
     setBoxShadow(style.boxShadow || "none");
     setOpacity(style.opacity || "1");
 
-    // classes
-    const currentClasses = selectedEl.className
+    // classes - safely handle className
+    const classNameStr = getClassNameString(selectedEl);
+    const currentClasses = classNameStr
       .split(" ")
       .filter((c) => c.trim() !== "");
     setClasses(currentClasses);
 
     // Observe class changes
     const observer = new MutationObserver(() => {
-      const updated = selectedEl.className
+      const classNameStr = getClassNameString(selectedEl);
+      const updated = classNameStr
         .split(" ")
         .filter((c) => c.trim() !== "");
       setClasses(updated);
@@ -178,7 +201,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
     if (!selectedEl) return;
     const updated = classes.filter((c) => c !== cls);
     setClasses(updated);
-    selectedEl.className = updated.join(" ");
+    setClassNameString(selectedEl, updated.join(" "));
   };
 
   const addClass = () => {
@@ -188,7 +211,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
     if (!classes.includes(trimmed)) {
       const updated = [...classes, trimmed];
       setClasses(updated);
-      selectedEl.className = updated.join(" ");
+      setClassNameString(selectedEl, updated.join(" "));
     }
     setNewClass("");
   };
@@ -372,6 +395,12 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
             value={newClass}
             onChange={(e) => setNewClass(e.target.value)}
             placeholder="Add class..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addClass();
+              }
+            }}
           />
           <Button type="button" onClick={addClass}>
             Add
@@ -511,6 +540,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
           onChange={(e) => applyStyle("opacity", e.target.value)}
           className="w-full mt-2"
         />
+        <span className="text-xs text-gray-500">{opacity}</span>
       </div>
 
       {/* Reset */}
