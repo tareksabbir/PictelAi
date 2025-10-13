@@ -55,6 +55,21 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     doc.close();
   }, []);
 
+  // Wait for libraries to load in iframe
+  const waitForLibraries = (win: Window): Promise<void> => {
+    return new Promise((resolve) => {
+      const checkLibraries = () => {
+        // Check if all required libraries are loaded
+        if (win.Chart && win.AOS && win.Swiper && win.tippy) {
+          resolve();
+        } else {
+          setTimeout(checkLibraries, 100);
+        }
+      };
+      checkLibraries();
+    });
+  };
+
   // Inject generated code and initialize libraries
   useEffect(() => {
     // Skip if code hasn't changed or is empty
@@ -80,101 +95,171 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     // Clean and inject HTML
     root.innerHTML = generatedCode.replace(/```(html)?/g, "").trim();
 
-    // Delay initialization to ensure DOM is ready and reduce flickering
-    initTimeoutRef.current = setTimeout(() => {
-      try {
-        // AOS Animation
-        if (win.AOS?.init) {
-          win.AOS.init();
-        }
+    // Wait for libraries to load, then initialize
+    waitForLibraries(win)
+      .then(() => {
+        // Additional delay to ensure DOM is fully painted
+        return new Promise(resolve => setTimeout(resolve, 300));
+      })
+      .then(() => {
+        try {
+          console.log("Initializing libraries...");
 
-        // Swiper Initialization
-        if (win.Swiper) {
-          doc.querySelectorAll(".swiper-container").forEach((el) => {
-            if (!(el instanceof HTMLElement)) return;
-            try {
-              new win.Swiper(el, {
-                slidesPerView: 1,
-                loop: true,
-                pagination: { el: ".swiper-pagination", clickable: true },
-                navigation: {
-                  nextEl: ".swiper-button-next",
-                  prevEl: ".swiper-button-prev",
-                },
-              });
-            } catch (err) {
-              console.error("Swiper init error:", err);
-            }
-          });
-        }
+          // AOS Animation
+          if (win.AOS?.init) {
+            win.AOS.init();
+            console.log("AOS initialized");
+          }
 
-        // Tippy Tooltips
-        if (win.tippy) {
-          doc.querySelectorAll("[data-tippy-content]").forEach((el) => {
-            if (!(el instanceof HTMLElement)) return;
-            try {
-              win.tippy(el);
-            } catch (err) {
-              console.error("Tippy init error:", err);
-            }
-          });
-        }
+          // Swiper Initialization
+          if (win.Swiper) {
+            doc.querySelectorAll(".swiper-container").forEach((el) => {
+              if (!(el instanceof HTMLElement)) return;
+              try {
+                new win.Swiper(el, {
+                  slidesPerView: 1,
+                  loop: true,
+                  pagination: { el: ".swiper-pagination", clickable: true },
+                  navigation: {
+                    nextEl: ".swiper-button-next",
+                    prevEl: ".swiper-button-prev",
+                  },
+                });
+                console.log("Swiper initialized");
+              } catch (err) {
+                console.error("Swiper init error:", err);
+              }
+            });
+          }
 
-        // Chart.js
-        if (win.Chart) {
-          doc
-            .querySelectorAll("canvas[data-chart='true']")
-            .forEach((canvas) => {
-              if (!(canvas instanceof HTMLCanvasElement)) return;
-              if (canvas.dataset.inited) return;
+          // Tippy Tooltips
+          if (win.tippy) {
+            doc.querySelectorAll("[data-tippy-content]").forEach((el) => {
+              if (!(el instanceof HTMLElement)) return;
+              try {
+                win.tippy(el);
+                console.log("Tippy initialized");
+              } catch (err) {
+                console.error("Tippy init error:", err);
+              }
+            });
+          }
 
-              canvas.dataset.inited = "true";
+          // Chart.js - WITH PROPER ERROR HANDLING
+          if (win.Chart) {
+            const canvases = doc.querySelectorAll("canvas[data-chart='true']");
+            console.log(`Found ${canvases.length} canvas elements for charts`);
 
+            canvases.forEach((canvas) => {
+              if (!(canvas instanceof HTMLCanvasElement)) {
+                console.warn("Element is not a canvas:", canvas);
+                return;
+              }
+
+              // Skip if already initialized
+              if (canvas.dataset.inited === "true") {
+                console.log("Canvas already initialized, skipping");
+                return;
+              }
+
+              console.log("Initializing chart for canvas:", canvas);
+
+              // Default values
               let labels = ["Red", "Blue", "Green"];
               let data = [12, 19, 3];
+              let chartType = "bar";
 
               try {
-                if (canvas.dataset.labels)
+                if (canvas.dataset.labels) {
                   labels = JSON.parse(canvas.dataset.labels);
-                if (canvas.dataset.data) data = JSON.parse(canvas.dataset.data);
+                }
+                if (canvas.dataset.data) {
+                  data = JSON.parse(canvas.dataset.data);
+                }
+                if (canvas.dataset.type) {
+                  chartType = canvas.dataset.type;
+                }
+                console.log("Chart config:", { chartType, labels, data });
               } catch (err) {
                 console.error("Chart parse error:", err);
               }
 
               try {
-                new win.Chart(canvas.getContext("2d"), {
-                  type: canvas.dataset.type || "bar",
+                const ctx = canvas.getContext("2d");
+                if (!ctx) {
+                  console.error("Failed to get 2D context for canvas");
+                  return;
+                }
+
+                // Destroy existing chart if any
+                const existingChart = win.Chart.getChart(canvas);
+                if (existingChart) {
+                  existingChart.destroy();
+                }
+
+                // Create new chart
+                new win.Chart(ctx, {
+                  type: chartType,
                   data: {
                     labels,
                     datasets: [
                       {
                         label: "Data",
                         data,
-                        backgroundColor: "rgba(59,130,246,0.7)",
+                        backgroundColor: [
+                          "rgba(255, 99, 132, 0.7)",
+                          "rgba(54, 162, 235, 0.7)",
+                          "rgba(75, 192, 192, 0.7)",
+                        ],
+                        borderColor: [
+                          "rgba(255, 99, 132, 1)",
+                          "rgba(54, 162, 235, 1)",
+                          "rgba(75, 192, 192, 1)",
+                        ],
+                        borderWidth: 1,
                       },
                     ],
                   },
                   options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     plugins: {
-                      legend: { display: true },
+                      legend: { 
+                        display: true,
+                        position: 'top'
+                      },
                       tooltip: { enabled: true },
                     },
+                    scales: chartType === 'bar' || chartType === 'line' ? {
+                      y: {
+                        beginAtZero: true
+                      }
+                    } : undefined
                   },
                 });
+
+                // Mark as initialized
+                canvas.dataset.inited = "true";
+                console.log("Chart successfully created");
               } catch (err) {
                 console.error("Chart render error:", err);
               }
             });
-        }
+          } else {
+            console.warn("Chart.js not available in iframe window");
+          }
 
-        // Hide loading with smooth transition
-        setTimeout(() => setIsLoading(false), 100);
-      } catch (error) {
-        console.error("Library initialization error:", error);
+          // Hide loading with smooth transition
+          setTimeout(() => setIsLoading(false), 100);
+        } catch (error) {
+          console.error("Library initialization error:", error);
+          setIsLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load libraries:", error);
         setIsLoading(false);
-      }
-    }, 150);
+      });
 
     return () => {
       if (initTimeoutRef.current) {
