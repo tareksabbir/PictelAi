@@ -43,6 +43,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     null
   );
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize iframe shell once
   useEffect(() => {
@@ -55,11 +56,38 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     doc.close();
   }, []);
 
+  // Auto-save function
+  const saveGeneratedCode = useCallback(
+    async (code: string) => {
+      try {
+        await axios.put("/api/frames", {
+          designCode: code,
+          frameId,
+          projectId,
+        });
+        console.log("[Auto-save] Website saved successfully");
+      } catch (error) {
+        console.error("[Auto-save] Failed to save:", error);
+      }
+    },
+    [frameId, projectId]
+  );
+
+  // Debounced auto-save (saves 2 seconds after last change)
+  const triggerAutoSave = useCallback((code: string) => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      saveGeneratedCode(code);
+    }, 2000); // Auto-save 2 seconds after last change
+  }, [saveGeneratedCode]);
+
   // Wait for libraries to load in iframe
   const waitForLibraries = (win: Window): Promise<void> => {
     return new Promise((resolve) => {
       const checkLibraries = () => {
-        // Check if all required libraries are loaded
         if (win.Chart && win.AOS && win.Swiper && win.tippy) {
           resolve();
         } else {
@@ -70,12 +98,10 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     });
   };
 
-  // Inject generated code and initialize libraries
+  // Main code injection and initialization effect
   useEffect(() => {
-    // Skip if code hasn't changed or is empty
     if (!generatedCode || prevCodeRef.current === generatedCode) return;
 
-    // Clear any pending initialization
     if (initTimeoutRef.current) {
       clearTimeout(initTimeoutRef.current);
     }
@@ -95,169 +121,265 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
     // Clean and inject HTML
     root.innerHTML = generatedCode.replace(/```(html)?/g, "").trim();
 
-    // Wait for libraries to load, then initialize
-    waitForLibraries(win)
+    // Trigger auto-save when code changes
+    triggerAutoSave(generatedCode);
+
+    // Wait for all libraries to load
+    const checkLibraries = () => {
+      return new Promise<void>((resolve) => {
+        const check = () => {
+          if (win.Chart && win.AOS && win.Swiper && win.tippy) {
+            resolve();
+          } else {
+            setTimeout(check, 50);
+          }
+        };
+        check();
+      });
+    };
+
+    checkLibraries()
       .then(() => {
-        // Additional delay to ensure DOM is fully painted
-        return new Promise(resolve => setTimeout(resolve, 300));
+        return new Promise(resolve => setTimeout(resolve, 200));
       })
       .then(() => {
-        try {
-          console.log("Initializing libraries...");
+        console.log("[Init] Starting initialization...");
 
-          // AOS Animation
-          if (win.AOS?.init) {
-            win.AOS.init();
-            console.log("AOS initialized");
-          }
-
-          // Swiper Initialization
-          if (win.Swiper) {
-            doc.querySelectorAll(".swiper-container").forEach((el) => {
-              if (!(el instanceof HTMLElement)) return;
-              try {
-                new win.Swiper(el, {
-                  slidesPerView: 1,
-                  loop: true,
-                  pagination: { el: ".swiper-pagination", clickable: true },
-                  navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev",
-                  },
-                });
-                console.log("Swiper initialized");
-              } catch (err) {
-                console.error("Swiper init error:", err);
-              }
-            });
-          }
-
-          // Tippy Tooltips
-          if (win.tippy) {
-            doc.querySelectorAll("[data-tippy-content]").forEach((el) => {
-              if (!(el instanceof HTMLElement)) return;
-              try {
-                win.tippy(el);
-                console.log("Tippy initialized");
-              } catch (err) {
-                console.error("Tippy init error:", err);
-              }
-            });
-          }
-
-          // Chart.js - WITH PROPER ERROR HANDLING
-          if (win.Chart) {
-            const canvases = doc.querySelectorAll("canvas[data-chart='true']");
-            console.log(`Found ${canvases.length} canvas elements for charts`);
-
-            canvases.forEach((canvas) => {
-              if (!(canvas instanceof HTMLCanvasElement)) {
-                console.warn("Element is not a canvas:", canvas);
-                return;
-              }
-
-              // Skip if already initialized
-              if (canvas.dataset.inited === "true") {
-                console.log("Canvas already initialized, skipping");
-                return;
-              }
-
-              console.log("Initializing chart for canvas:", canvas);
-
-              // Default values
-              let labels = ["Red", "Blue", "Green"];
-              let data = [12, 19, 3];
-              let chartType = "bar";
-
-              try {
-                if (canvas.dataset.labels) {
-                  labels = JSON.parse(canvas.dataset.labels);
-                }
-                if (canvas.dataset.data) {
-                  data = JSON.parse(canvas.dataset.data);
-                }
-                if (canvas.dataset.type) {
-                  chartType = canvas.dataset.type;
-                }
-                console.log("Chart config:", { chartType, labels, data });
-              } catch (err) {
-                console.error("Chart parse error:", err);
-              }
-
-              try {
-                const ctx = canvas.getContext("2d");
-                if (!ctx) {
-                  console.error("Failed to get 2D context for canvas");
-                  return;
-                }
-
-                // Destroy existing chart if any
-                const existingChart = win.Chart.getChart(canvas);
-                if (existingChart) {
-                  existingChart.destroy();
-                }
-
-                // Create new chart
-                new win.Chart(ctx, {
-                  type: chartType,
-                  data: {
-                    labels,
-                    datasets: [
-                      {
-                        label: "Data",
-                        data,
-                        backgroundColor: [
-                          "rgba(255, 99, 132, 0.7)",
-                          "rgba(54, 162, 235, 0.7)",
-                          "rgba(75, 192, 192, 0.7)",
-                        ],
-                        borderColor: [
-                          "rgba(255, 99, 132, 1)",
-                          "rgba(54, 162, 235, 1)",
-                          "rgba(75, 192, 192, 1)",
-                        ],
-                        borderWidth: 1,
-                      },
-                    ],
-                  },
-                  options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                      legend: { 
-                        display: true,
-                        position: 'top'
-                      },
-                      tooltip: { enabled: true },
-                    },
-                    scales: chartType === 'bar' || chartType === 'line' ? {
-                      y: {
-                        beginAtZero: true
-                      }
-                    } : undefined
-                  },
-                });
-
-                // Mark as initialized
-                canvas.dataset.inited = "true";
-                console.log("Chart successfully created");
-              } catch (err) {
-                console.error("Chart render error:", err);
-              }
-            });
-          } else {
-            console.warn("Chart.js not available in iframe window");
-          }
-
-          // Hide loading with smooth transition
-          setTimeout(() => setIsLoading(false), 100);
-        } catch (error) {
-          console.error("Library initialization error:", error);
-          setIsLoading(false);
+        // 1. AOS
+        if (win.AOS?.init) {
+          //@ts-ignore
+          win.AOS.init({ duration: 800, once: true });
+          console.log("[Init] ✓ AOS");
         }
+
+        // 2. Tippy
+        if (win.tippy) {
+          const tippyEls = doc.querySelectorAll("[data-tippy-content]");
+          if (tippyEls.length > 0) {
+            tippyEls.forEach(el => {
+              try {
+                win.tippy(el, { theme: 'light', animation: 'fade' });
+              } catch (e) {
+                console.error("Tippy element error:", e);
+              }
+            });
+            console.log(`[Init] ✓ Tippy (${tippyEls.length} elements)`);
+          }
+        }
+
+        // 3. Swiper
+        if (win.Swiper) {
+          const swiperContainers = doc.querySelectorAll(".swiper-container, .swiper");
+          swiperContainers.forEach((container, idx) => {
+            try {
+              new win.Swiper(container, {
+                slidesPerView: 1,
+                spaceBetween: 30,
+                loop: true,
+                autoplay: { delay: 3000, disableOnInteraction: false },
+                pagination: {
+                  el: container.querySelector(".swiper-pagination"),
+                  clickable: true,
+                },
+                navigation: {
+                  nextEl: container.querySelector(".swiper-button-next"),
+                  prevEl: container.querySelector(".swiper-button-prev"),
+                },
+                breakpoints: {
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                },
+              });
+              console.log(`[Init] ✓ Swiper #${idx + 1}`);
+            } catch (e) {
+              console.error(`Swiper #${idx + 1} error:`, e);
+            }
+          });
+        }
+
+        // 4. Chart.js - FIXED: Use consistent attribute name
+        if (win.Chart) {
+          const canvases = doc.querySelectorAll('canvas[data-chart="true"]');
+          console.log(`[Charts] Found ${canvases.length} canvases`);
+
+          canvases.forEach((canvas, idx) => {
+            if (!(canvas instanceof HTMLCanvasElement)) {
+              console.warn(`Element ${idx} is not a canvas`);
+              return;
+            }
+
+            // FIXED: Use 'chartInitialized' instead of mixing 'initialized' and 'inited'
+            if (canvas.dataset.chartInitialized === "true") {
+              console.log(`[Charts] Canvas #${idx + 1} already initialized`);
+              return;
+            }
+
+            try {
+              const chartType = canvas.dataset.type || "bar";
+              let labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+              let dataValues = [12, 19, 15, 22, 18, 25];
+              let datasetLabel = canvas.dataset.label || "Data";
+
+              if (canvas.dataset.labels) {
+                try {
+                  labels = JSON.parse(canvas.dataset.labels);
+                } catch (e) {
+                  console.warn(`Failed to parse labels for canvas #${idx + 1}`);
+                }
+              }
+
+              if (canvas.dataset.data) {
+                try {
+                  dataValues = JSON.parse(canvas.dataset.data);
+                } catch (e) {
+                  console.warn(`Failed to parse data for canvas #${idx + 1}`);
+                }
+              }
+
+              const ctx = canvas.getContext("2d");
+              if (!ctx) {
+                console.error(`Failed to get 2D context for canvas #${idx + 1}`);
+                return;
+              }
+
+              // Destroy existing chart
+              const existingChart = win.Chart.getChart(canvas);
+              if (existingChart) {
+                existingChart.destroy();
+              }
+
+              const multiColors = [
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(54, 162, 235, 0.7)",
+                "rgba(75, 192, 192, 0.7)",
+                "rgba(153, 102, 255, 0.7)",
+                "rgba(255, 159, 64, 0.7)",
+                "rgba(255, 205, 86, 0.7)",
+              ];
+
+              const blueColor = {
+                background: "rgba(37, 99, 235, 0.7)",
+                border: "rgba(37, 99, 235, 1)",
+              };
+
+              let datasets;
+              if (chartType === "pie" || chartType === "doughnut") {
+                datasets = [
+                  {
+                    label: datasetLabel,
+                    data: dataValues,
+                    backgroundColor: multiColors,
+                    borderColor: multiColors.map((c) => c.replace("0.7", "1")),
+                    borderWidth: 2,
+                  },
+                ];
+              } else {
+                datasets = [
+                  {
+                    label: datasetLabel,
+                    data: dataValues,
+                    backgroundColor: blueColor.background,
+                    borderColor: blueColor.border,
+                    borderWidth: 2,
+                    tension: chartType === "line" ? 0.4 : 0,
+                    fill: chartType === "line",
+                  },
+                ];
+              }
+
+              new win.Chart(ctx, {
+                type: chartType,
+                data: {
+                  labels: labels,
+                  datasets: datasets,
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  aspectRatio: 2,
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: "top",
+                      labels: {
+                        padding: 15,
+                        font: { size: 12, weight: "500" },
+                        usePointStyle: true,
+                      },
+                    },
+                    tooltip: {
+                      enabled: true,
+                      backgroundColor: "rgba(0, 0, 0, 0.8)",
+                      padding: 12,
+                      cornerRadius: 8,
+                      titleFont: { size: 14, weight: "bold" },
+                      bodyFont: { size: 13 },
+                    },
+                  },
+                  scales:
+                    chartType === "bar" || chartType === "line"
+                      ? {
+                          y: {
+                            beginAtZero: true,
+                            grid: { color: "rgba(0, 0, 0, 0.05)" },
+                            ticks: { font: { size: 11 } },
+                          },
+                          x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } },
+                          },
+                        }
+                      : undefined,
+                },
+              });
+
+              // FIXED: Use consistent attribute name
+              canvas.dataset.chartInitialized = "true";
+              console.log(`[Charts] ✓ Chart #${idx + 1} created (${chartType})`);
+            } catch (error) {
+              console.error(`[Charts] ✗ Error creating chart #${idx + 1}:`, error);
+            }
+          });
+        } else {
+          console.error("[Charts] Chart.js not available");
+        }
+
+        // 5. Image error handling
+        const images = doc.querySelectorAll("img");
+        images.forEach((img, idx) => {
+          img.classList.add("loading");
+
+          img.addEventListener("load", function () {
+            this.classList.remove("loading");
+            this.classList.add("loaded");
+          });
+
+          img.addEventListener("error", function () {
+            console.warn(`[Images] Failed to load image #${idx + 1}:`, this.src);
+            this.src = `https://placehold.co/600x400/e5e7eb/64748b?text=Image+${idx + 1}`;
+            this.classList.remove("loading");
+            this.classList.add("loaded");
+          });
+        });
+
+        // 6. Flowbite
+        //@ts-ignore
+        if (typeof win.initFlowbite !== "undefined") {
+          try {
+            //@ts-ignore
+            win.initFlowbite();
+            console.log("[Init] ✓ Flowbite");
+          } catch (e) {
+            console.error("[Init] ✗ Flowbite error:", e);
+          }
+        }
+
+        console.log("[Init] ✓ All libraries initialized");
+        
+        setTimeout(() => setIsLoading(false), 150);
       })
       .catch((error) => {
-        console.error("Failed to load libraries:", error);
+        console.error("[Init] Failed to initialize:", error);
         setIsLoading(false);
       });
 
@@ -266,7 +388,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
         clearTimeout(initTimeoutRef.current);
       }
     };
-  }, [generatedCode]);
+  }, [generatedCode, triggerAutoSave]);
 
   // Interactive element selection feature
   useEffect(() => {
@@ -281,7 +403,6 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
       if (selectedEl) return;
       const target = e.target as HTMLElement;
 
-      // Clear previous hover
       if (hoverEl && hoverEl !== target) {
         hoverEl.style.outline = "";
       }
@@ -304,7 +425,6 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
       const target = e.target as HTMLElement;
 
-      // Deselect previous element
       if (selectedEl && selectedEl !== target) {
         selectedEl.style.outline = "";
         selectedEl.removeAttribute("contenteditable");
@@ -316,14 +436,17 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
       selectedEl.setAttribute("contenteditable", "true");
       selectedEl.focus();
 
-      // Add blur listener to the selected element
       selectedEl.addEventListener("blur", handleBlur);
       setSelectedElement(selectedEl);
     };
 
     const handleBlur = () => {
-      if (selectedEl) {
-        console.log("Final edited element:", selectedEl.outerHTML);
+      if (selectedEl && iframeRef.current?.contentDocument) {
+        // Auto-save when element is edited
+        const root = iframeRef.current.contentDocument.getElementById("root");
+        if (root) {
+          triggerAutoSave(root.innerHTML);
+        }
       }
     };
 
@@ -337,20 +460,17 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
       }
     };
 
-    // Add event listeners
     doc.body?.addEventListener("mouseover", handleMouseOver);
     doc.body?.addEventListener("mouseout", handleMouseOut);
     doc.body?.addEventListener("click", handleClick);
     doc.addEventListener("keydown", handleKeyDown);
 
-    // Cleanup on unmount or when generatedCode changes
     return () => {
       doc.body?.removeEventListener("mouseover", handleMouseOver);
       doc.body?.removeEventListener("mouseout", handleMouseOut);
       doc.body?.removeEventListener("click", handleClick);
       doc.removeEventListener("keydown", handleKeyDown);
 
-      // Clean up any remaining outlines
       if (hoverEl) hoverEl.style.outline = "";
       if (selectedEl) {
         selectedEl.style.outline = "";
@@ -358,31 +478,16 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
         selectedEl.removeEventListener("blur", handleBlur);
       }
     };
-  }, [generatedCode]);
+  }, [generatedCode, triggerAutoSave]);
 
   const handleScreenSizeChange = useCallback((size: string) => {
     setSelectedScreenSize(size);
   }, []);
 
+  // Manual save handler (for save button)
   useEffect(() => {
     onSaveData && onSaveCode();
   }, [onSaveData]);
-
-  const saveGeneratedCode = useCallback(
-    async (code: string) => {
-      try {
-        await axios.put("/api/frames", {
-          designCode: code,
-          frameId,
-          projectId,
-        });
-        toast.success("Website saved successfully!");
-      } catch (error) {
-        console.error("Failed to save generated code:", error);
-      }
-    },
-    [frameId, projectId]
-  );
 
   const onSaveCode = async () => {
     if (iframeRef.current) {
@@ -400,18 +505,29 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
             element.style.cursor = "";
           });
           const html = cloneDoc.outerHTML;
-          console.log(html);
-          saveGeneratedCode(html);
+          await saveGeneratedCode(html);
+          toast.success("Website saved successfully!");
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Manual save error:", error);
+        toast.error("Failed to save website");
+      }
     }
   };
+
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <section className="w-full flex flex-col items-center p-4">
       <div className="w-full flex gap-4">
         <div className="w-full flex flex-col justify-center relative">
-          {/* AI Generation Loading Overlay (Full Screen) */}
           {isGenerating && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 backdrop-blur-sm rounded-xl">
               <div className="flex flex-col items-center gap-4 p-8 bg-white/80 rounded-2xl shadow-lg">
@@ -427,7 +543,6 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
                     This may take a few moments
                   </p>
                 </div>
-                {/* Animated dots */}
                 <div className="flex gap-2">
                   <div
                     className="w-2 h-2 bg-gray-600 rounded-full animate-bounce"
@@ -446,7 +561,6 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
             </div>
           )}
 
-          {/* Rendering Loading Overlay (Subtle) */}
           {isLoading && !isGenerating && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[2px] rounded-xl">
               <div className="flex flex-col items-center gap-3">
@@ -461,7 +575,6 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
             </div>
           )}
 
-          {/* Empty State */}
           {!generatedCode && !isGenerating && (
             <div className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
               <div className="text-center space-y-4 p-8">
@@ -509,7 +622,6 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
           />
         </div>
 
-        {/* Side Panel for Element Editing */}
         {selectedElement?.tagName === "IMG" ? (
           //@ts-ignore
           <ImageSettingSection selectedEl={selectedElement} />
@@ -525,3 +637,13 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 };
 
 export default memo(WebsiteDesign);
+
+// ALSO UPDATE baseHtml.ts - Change line 176 from:
+// canvas.dataset.initialized = 'true';
+// TO:
+// canvas.dataset.chartInitialized = 'true';
+
+// And change line 138 from:
+// if (canvas.dataset.initialized === 'true') {
+// TO:
+// if (canvas.dataset.chartInitialized === 'true') {

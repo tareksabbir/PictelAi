@@ -385,7 +385,7 @@ const TextButton = () => {
             )}
 
             {user && hasUnlimitedAccess && (
-              <span className="text-xs font-medium text-black bg-black px-3 py-1.5 rounded-full flex items-center gap-1">
+              <span className="text-xs font-medium text-white bg-black px-3 py-1.5 rounded-full flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Unlimited
               </span>
