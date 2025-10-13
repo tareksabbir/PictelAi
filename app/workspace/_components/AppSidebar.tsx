@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -17,9 +16,9 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 p-4">
+        <Link href={"/"} className="flex items-center gap-2 p-4">
           <Image src="/logo.svg" alt="Logo" width={140} height={50} />
-        </div>
+        </Link>
         <Link href={"/workspace/new"} className="mt-5 w-full px-4">
           <Button className="w-full"> + Add New Project</Button>
         </Link>
@@ -30,7 +29,7 @@ export function AppSidebar() {
           <ProjectList />
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter >
+      <SidebarFooter>
         <SidebarFooterSection />
       </SidebarFooter>
     </Sidebar>
