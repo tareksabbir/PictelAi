@@ -74,15 +74,18 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
   );
 
   // Debounced auto-save (saves 2 seconds after last change)
-  const triggerAutoSave = useCallback((code: string) => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
+  const triggerAutoSave = useCallback(
+    (code: string) => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
 
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      saveGeneratedCode(code);
-    }, 2000); // Auto-save 2 seconds after last change
-  }, [saveGeneratedCode]);
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        saveGeneratedCode(code);
+      }, 2000); // Auto-save 2 seconds after last change
+    },
+    [saveGeneratedCode]
+  );
 
   // Wait for libraries to load in iframe
   const waitForLibraries = (win: Window): Promise<void> => {
@@ -140,7 +143,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
     checkLibraries()
       .then(() => {
-        return new Promise(resolve => setTimeout(resolve, 200));
+        return new Promise((resolve) => setTimeout(resolve, 200));
       })
       .then(() => {
         console.log("[Init] Starting initialization...");
@@ -156,9 +159,9 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
         if (win.tippy) {
           const tippyEls = doc.querySelectorAll("[data-tippy-content]");
           if (tippyEls.length > 0) {
-            tippyEls.forEach(el => {
+            tippyEls.forEach((el) => {
               try {
-                win.tippy(el, { theme: 'light', animation: 'fade' });
+                win.tippy(el, { theme: "light", animation: "fade" });
               } catch (e) {
                 console.error("Tippy element error:", e);
               }
@@ -169,7 +172,9 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
         // 3. Swiper
         if (win.Swiper) {
-          const swiperContainers = doc.querySelectorAll(".swiper-container, .swiper");
+          const swiperContainers = doc.querySelectorAll(
+            ".swiper-container, .swiper"
+          );
           swiperContainers.forEach((container, idx) => {
             try {
               new win.Swiper(container, {
@@ -238,7 +243,9 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
               const ctx = canvas.getContext("2d");
               if (!ctx) {
-                console.error(`Failed to get 2D context for canvas #${idx + 1}`);
+                console.error(
+                  `Failed to get 2D context for canvas #${idx + 1}`
+                );
                 return;
               }
 
@@ -335,9 +342,14 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 
               // FIXED: Use consistent attribute name
               canvas.dataset.chartInitialized = "true";
-              console.log(`[Charts] ✓ Chart #${idx + 1} created (${chartType})`);
+              console.log(
+                `[Charts] ✓ Chart #${idx + 1} created (${chartType})`
+              );
             } catch (error) {
-              console.error(`[Charts] ✗ Error creating chart #${idx + 1}:`, error);
+              console.error(
+                `[Charts] ✗ Error creating chart #${idx + 1}:`,
+                error
+              );
             }
           });
         } else {
@@ -355,8 +367,13 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
           });
 
           img.addEventListener("error", function () {
-            console.warn(`[Images] Failed to load image #${idx + 1}:`, this.src);
-            this.src = `https://placehold.co/600x400/e5e7eb/64748b?text=Image+${idx + 1}`;
+            console.warn(
+              `[Images] Failed to load image #${idx + 1}:`,
+              this.src
+            );
+            this.src = `https://placehold.co/600x400/e5e7eb/64748b?text=Image+${
+              idx + 1
+            }`;
             this.classList.remove("loading");
             this.classList.add("loaded");
           });
@@ -375,7 +392,7 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
         }
 
         console.log("[Init] ✓ All libraries initialized");
-        
+
         setTimeout(() => setIsLoading(false), 150);
       })
       .catch((error) => {
@@ -637,13 +654,3 @@ const WebsiteDesign = ({ generatedCode, isGenerating = false }: Props) => {
 };
 
 export default memo(WebsiteDesign);
-
-// ALSO UPDATE baseHtml.ts - Change line 176 from:
-// canvas.dataset.initialized = 'true';
-// TO:
-// canvas.dataset.chartInitialized = 'true';
-
-// And change line 138 from:
-// if (canvas.dataset.initialized === 'true') {
-// TO:
-// if (canvas.dataset.chartInitialized === 'true') {
