@@ -1,132 +1,293 @@
-Here’s a **rewritten, clean, and concise README** for your project — rewritten in a **professional and polished** style, with **all code removed** and unnecessary details simplified while keeping it technically rich and developer-oriented.
+
+
+# 🧠 PictelAI — Full-Stack AI-Powered UI Generator
+
+**PictelAI** is a **full-stack AI-driven web application** that generates **production-ready UI components and full web layouts** through natural language conversation.
+It integrates **LLM-based code generation** with a **real-time iframe rendering system**, enabling users to design, edit, and preview live web interfaces instantly.
 
 ---
 
-# 🧠 PictelAi — AI-Powered Web Development Assistant
+## 🚀 Key Features
 
-**PictelAi** is an advanced AI-powered development tool that converts natural language prompts into fully functional, production-ready web interfaces.
-It bridges the gap between design ideas and code by using intelligent prompt engineering to generate responsive websites, components, and dashboards — all styled with **Tailwind CSS**, **Flowbite UI**, and modern JavaScript libraries.
-
----
-
-## 🚀 Core Features
-
-* **Natural Language to Code** — Instantly transform text prompts into complete HTML/CSS interfaces.
-* **Pre-Built Templates** — Includes 36 optimized prompt examples across 11 categories (e.g., Dashboards, Landing Pages, Authentication, E-commerce).
-* **Interactive Charts** — Supports multiple chart types using dynamic data attributes.
-* **Component Library** — Full integration with Flowbite UI for buttons, modals, tables, and forms.
-* **Animation Support** — Smooth visual effects powered by AOS and GSAP.
-* **Responsive Design** — Built with a mobile-first approach and adaptive Tailwind breakpoints.
+* 💬 **Conversational UI Design** — Generate HTML/CSS/Tailwind-based interfaces from natural language prompts.
+* ⚡ **Real-Time Rendering** — Instantly preview generated UIs in an interactive iframe sandbox.
+* 🔁 **Auto-Save System** — Automatically stores design changes with a debounce mechanism.
+* 🔐 **User Authentication** — Secure login and credits management via **Clerk**.
+* 🧩 **Component Libraries** — Flowbite, AOS, Swiper, Chart.js, and Tippy.js integrated for generated code.
+* 🧠 **LLM Integration** — Uses **OpenRouter.ai** with `tongyi-deepresearch-30b` model for intelligent UI generation.
+* ☁️ **Serverless Backend** — Built on **Next.js 14**, **Neon PostgreSQL**, and **Drizzle ORM**.
+* 🧱 **Modular Architecture** — Clear separation between playground, generation pipeline, and persistence layer.
 
 ---
 
 ## 🧩 Technology Stack
 
-### Frontend
-
-* **Next.js 15+** — React-based framework using the App Router for modern server-side rendering.
-* **React 19+** — Component-driven UI with state management and hooks.
-* **TypeScript** — Type-safe code and predictable development.
-
-### Styling & UI
-
-* **Tailwind CSS 4** — Utility-first styling system for fast UI building.
-* **Flowbite** — Ready-to-use component library built on Tailwind.
-* **Radix UI** — Accessible, composable UI primitives.
-
-### Libraries & Enhancements
-
-* **Chart.js** — Interactive data visualizations.
-* **Swiper.js** — Carousel and slider functionality.
-* **Tippy.js** — Tooltips and popovers.
-* **GSAP & AOS** — Animation and scroll-triggered motion effects.
-* **Iconify** — Extensive icon support across multiple sets.
-
-### Backend & Database
-
-* **Clerk** — Authentication and user management.
-* **Drizzle ORM** — Type-safe and lightweight database management.
-* **Neon Database** — Serverless PostgreSQL for scalable data handling.
+| Layer                    | Technology                                    | Purpose                                      |
+| ------------------------ | --------------------------------------------- | -------------------------------------------- |
+| Frontend Framework       | **Next.js 14 (App Router)**                   | SSR, routing, API routes                     |
+| UI Components            | **Radix UI, Tailwind CSS**                    | Accessible primitives, utility-first styling |
+| Authentication           | **Clerk**                                     | Secure auth and session management           |
+| Database                 | **Neon PostgreSQL**                           | Scalable serverless database                 |
+| ORM                      | **Drizzle ORM**                               | Type-safe SQL queries                        |
+| AI Service               | **OpenRouter.ai (Tongyi DeepResearch 30B)**   | LLM code generation                          |
+| Image Processing         | **ImageKit**                                  | Image upload and optimization                |
+| Generated Code Libraries | **Flowbite, AOS, Swiper, Chart.js, Tippy.js** | Animations and UI interactions               |
 
 ---
 
-## 🧱 Database Schema
+## ⚙️ Installation & Setup
 
-The backend structure consists of four main tables:
+### 🧠 Prerequisites
 
-1. **Users** — Manages authentication and credits.
-2. **Projects** — Stores project metadata per user.
-3. **Frames** — Saves generated design code linked to projects.
-4. **Chats** — Keeps conversation histories in JSON format.
+Make sure you have installed:
 
----
-
-## ⚙️ How It Works
-
-1. **Prompt Classification**
-
-   * Detects whether the input is a **code-generation request** or a **conversational query**.
-   * Code-related prompts (e.g., “Create a dashboard”) trigger generation logic.
-
-2. **AI Code Generation**
-
-   * Uses structured prompt engineering to build semantic, accessible HTML with Tailwind classes.
-   * Ensures consistent theming, spacing, and responsive breakpoints.
-
-3. **HTML Integration**
-
-   * Generated output is wrapped within a base HTML structure containing all necessary CDNs, initialization scripts, and responsive configurations.
+* Node.js **>=18**
+* npm or yarn
+* PostgreSQL (Neon DB or local)
+* Clerk account (for authentication)
+* OpenRouter API key
+* ImageKit credentials
 
 ---
 
-## 🎨 Design Principles
+### 🔧 1. Clone the Repository
 
-1. **Production-Ready** — Outputs fully usable code for direct deployment.
-2. **Mobile-First** — Optimized for all screen sizes by default.
-3. **Accessibility** — Adheres to WCAG 2.1 AA standards with proper ARIA labels.
-4. **Performance** — Optimized DOM structure and lazy-loading strategies.
-5. **Consistency** — Blue-themed UI with unified design language and spacing.
-
----
-
-## 🧠 System Highlights
-
-* Built-in prompt system with over **400 lines of structured logic** defining generation rules, patterns, and supported libraries.
-* Outputs only `<body>` content — perfect for injecting into templates dynamically.
-* Credit-based usage system — users begin with free credits before upgrading.
+```bash
+git clone https://github.com/tareksabbir/pictelai.git
+cd pictelai
+```
 
 ---
 
-## 📚 Example Use Cases
+### 📦 2. Install Dependencies
 
-* Generate **modern landing pages** for SaaS or portfolios.
-* Build **admin dashboards** with real-time analytics charts.
-* Create **multi-step forms** with validation and progress indicators.
-* Design **pricing pages**, **portfolio layouts**, or **interactive hero sections** — instantly.
-
----
-
-## 🧭 Project Philosophy
-
-> *“From idea to interface — in one command.”*
-> PictelAi aims to simplify the web development workflow by merging **AI-driven creativity** with **developer-level precision**, helping developers, designers, and startups prototype and build faster.
+```bash
+npm install
+# or
+yarn install
+```
 
 ---
 
-## 🏁 Future Improvements
+### 🔑 3. Environment Variables
 
-* Expand component generation with **3D and motion UI support**.
-* Introduce **custom LLM fine-tuning** for code optimization.
-* Add **user analytics dashboard** for prompt usage and insights.
-* Support **multi-theme (dark/light) UI generation**.
+Create a `.env.local` file in the project root and add:
+
+```bash
+DATABASE_URL="postgresql://<your_neon_connection_string>"
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<your_clerk_publishable_key>
+CLERK_SECRET_KEY=<your_clerk_secret_key>
+OPENROUTER_API_KEY=<your_openrouter_api_key>
+NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=<your_imagekit_url>
+IMAGEKIT_PRIVATE_KEY=<your_imagekit_private_key>
+IMAGEKIT_PUBLIC_KEY=<your_imagekit_public_key>
+```
 
 ---
 
-## 📄 License
+### 🧱 4. Database Migration
 
-This project is open-source and maintained by **Md. Tarek Rahman Sabbir**.
-Contributions, ideas, and pull requests are welcome.
+Run Drizzle migration to sync schema:
+
+```bash
+npm run db:push
+```
 
 ---
 
-Would you like me to make it **more portfolio-oriented** (e.g., written like a personal showcase of your skills and learning from building it), or keep it **strictly technical/documentation-style** like above?
+### ▶️ 5. Start Development Server
+
+```bash
+npm run dev
+```
+
+Open your browser at **[http://localhost:3000](http://localhost:3000)**
+
+---
+
+## 🧠 System Architecture
+
+PictelAI’s architecture consists of **five main layers**:
+
+1. **Frontend Playground (User Interface)**
+   Handles chat, AI interaction, and iframe rendering.
+
+2. **AI Code Generation Pipeline**
+   Uses `lib/aiPromt.ts` and OpenRouter API to stream HTML/CSS/JS code via Server-Sent Events (SSE).
+
+3. **Database Persistence Layer**
+   Built with Neon PostgreSQL and Drizzle ORM, maintaining hierarchical relationships:
+
+   * `usersTable` → `projectTable` → `frameTable` → `chatTable`
+
+4. **API Layer (Next.js API Routes)**
+   Handles CRUD operations for projects, frames, and messages.
+
+5. **Authentication & Authorization Layer**
+   Managed by **Clerk** with credit-based access control.
+
+---
+
+## 🏗️ Core Components Overview
+
+### 1. **Playground System**
+
+📁 `app/playground/[projectId]/page.tsx`
+
+* Main workspace where users chat and see generated code.
+* Uses custom hooks:
+
+  * `usePlaygroundData()` — manages project/frame state.
+  * `useCodeGeneration()` — streams and buffers code from AI.
+
+### 2. **AI Code Generation Pipeline**
+
+📁 `lib/aiPromt.ts`
+
+* Builds detailed prompt from user input.
+* Calls OpenRouter API for LLM output.
+* Streams response via **SSE**.
+* Cleans markdown fences and injects code into iframe.
+
+### 3. **WebsiteDesign Iframe Renderer**
+
+📁 `app/playground/_components/WebsiteDesign.tsx`
+
+* Injects base HTML and scripts into iframe.
+* Initializes libraries sequentially (AOS, Swiper, Chart.js, Flowbite).
+* Enables live inline editing with auto-save debounce (2s).
+
+### 4. **API Routes**
+
+| Route                | Description                                 |
+| -------------------- | ------------------------------------------- |
+| `POST /api/projects` | Creates new project & frame, deducts credit |
+| `GET /api/frames`    | Fetches frame data and chat history         |
+| `PUT /api/frames`    | Updates frame’s designCode after editing    |
+
+---
+
+## 🔐 Authentication & Credits System
+
+* Managed by **Clerk**.
+* New users receive **2 free credits**.
+* Each project creation deducts **1 credit** unless on unlimited plan.
+* Users with unlimited plans can create projects without restriction.
+
+---
+
+## 🧮 Data Model
+
+**Tables:**
+
+* `usersTable`: stores user info, credits
+* `projectTable`: maps to a single project
+* `frameTable`: stores design iterations & generated code
+* `chatTable`: stores conversation messages as JSON
+
+**Relationships:**
+
+```
+User → Project → Frame → Chat
+```
+
+**Fields of Interest:**
+
+* `frameTable.designCode`: stores generated HTML/CSS
+* `chatTable.chatMessage`: stores AI conversation history
+
+---
+
+## 🔄 Workflow Summary
+
+### 🧩 Project Creation Flow
+
+1. Check credits or unlimited plan
+2. Create `projectId` and `frameId`
+3. Save initial user message
+4. Call AI model → stream code
+5. Render inside iframe and auto-save changes
+
+### ⚡ Real-Time Streaming
+
+* AI response streamed via **SSE**
+* Chunks accumulated in `codeBufferRef`
+* Cleaned HTML injected into iframe root
+* Libraries initialized dynamically
+* Debounced auto-save triggered after edits
+
+---
+
+## ⚡ Performance Optimizations
+
+| Technique           | Purpose                            |
+| ------------------- | ---------------------------------- |
+| `React.memo`        | Prevents re-renders                |
+| `useCallback`       | Stable function references         |
+| `useRef`            | Persistent state storage           |
+| Debounce            | Limits auto-save calls             |
+| Lazy Initialization | Delays library loading until ready |
+| Code Buffering      | Smooth streaming experience        |
+
+---
+
+## 🧠 Prompt Engineering
+
+The core logic inside `lib/aiPromt.ts` defines the AI’s behavior:
+
+* Defines generation rules for UI, layout, and interactivity.
+* Instructs LLM to output **clean HTML/CSS/JS** (not markdown).
+* Provides CDN-based imports for Flowbite, Swiper, AOS, etc.
+
+---
+
+## 📸 Screenshots (Optional Section)
+
+*(You can later add screenshots or GIFs showing AI conversation, live preview, and editing.)*
+
+---
+
+## 🧰 Commands Reference
+
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `npm run dev`     | Start development server |
+| `npm run build`   | Build production bundle  |
+| `npm run start`   | Run production server    |
+| `npm run db:push` | Apply database schema    |
+| `npm run lint`    | Run ESLint checks        |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+
+   ```bash
+   git checkout -b feature/awesome-idea
+   ```
+3. Commit your changes
+
+   ```bash
+   git commit -m "Add awesome idea"
+   ```
+4. Push and create a Pull Request
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+You are free to use, modify, and distribute it with attribution.
+
+---
+
+## ✨ Author
+
+**Md. Tarek Rahman**
+🏠 Chittagong, Bangladesh
+💻 Full-Stack Developer | AI & Web Enthusiast
+🔗 [GitHub](https://github.com/tareksabbir) | [LinkedIn](https://linkedin.com/in/tareksabbir)
+
+
