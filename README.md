@@ -24,7 +24,7 @@ It integrates **LLM-based code generation** with a **real-time iframe rendering 
 
 | Layer                    | Technology                                    | Purpose                                      |
 | ------------------------ | --------------------------------------------- | -------------------------------------------- |
-| Frontend Framework       | **Next.js 14 (App Router)**                   | SSR, routing, API routes                     |
+| Frontend Framework       | **Next.js 15+ (App Router)**                   | SSR, routing, API routes                     |
 | UI Components            | **Radix UI, Tailwind CSS**                    | Accessible primitives, utility-first styling |
 | Authentication           | **Clerk**                                     | Secure auth and session management           |
 | Database                 | **Neon PostgreSQL**                           | Scalable serverless database                 |
