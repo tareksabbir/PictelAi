@@ -1,4 +1,5 @@
 // adjust the path
+
 import { PUT } from "@/app/api/chats/route";
 import db from "@/config/db";
 import { NextResponse, NextRequest } from "next/server";
