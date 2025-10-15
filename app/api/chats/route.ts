@@ -1,9 +1,9 @@
 import db from "@/config/db";
 import { chatTable } from "@/config/schema";
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(res: NextResponse) {
+export async function PUT(res: NextRequest) {
   const { messages, frameId } = await res.json();
   const result = await db
     .update(chatTable)

@@ -1,6 +1,7 @@
 import React, { memo } from "react";
-import { Messages } from "../[projectId]/page";
+
 import ChatFooter from "./ChatFooter";
+import { Messages } from "@/types/type";
 
 type Props = {
   messages: Messages[];
