@@ -11,7 +11,7 @@ const SidebarFooterSection = () => {
   const { userDetails } = useContext(UserDetailsContext);
   const { has } = useAuth();
   const hasUnlimitedAccess = has && has({ plan: "unlimited" });
-  
+
   const credits = userDetails?.credits || 0;
   const maxCredits = userDetails?.maxCredits || 2;
   const progressValue = maxCredits > 0 ? (credits / maxCredits) * 100 : 0;
@@ -28,7 +28,6 @@ const SidebarFooterSection = () => {
             <div className="flex-1 ml-2">
               <h3 className="text-sm font-semibold flex items-center gap-1">
                 Pro Plan
-               
               </h3>
               <p className="text-xs text-muted-foreground">Unlimited credits</p>
             </div>
@@ -39,14 +38,15 @@ const SidebarFooterSection = () => {
               <h2 className="text-sm text-muted-foreground">
                 Remaining Credits
               </h2>
-              <span className={`text-sm font-bold ${isLowCredits ? 'text-gray-500' : 'text-foreground'}`}>
+              <span
+                className={`text-sm font-bold ${
+                  isLowCredits ? "text-gray-500" : "text-foreground"
+                }`}
+              >
                 {credits} / {maxCredits}
               </span>
             </div>
-            <Progress 
-              value={progressValue}
-              className="h-2"
-            />
+            <Progress value={progressValue} className="h-2" />
             {isLowCredits && credits > 0 && (
               <p className="text-xs text-gray-500 font-medium">
                 Running low on credits
@@ -57,22 +57,22 @@ const SidebarFooterSection = () => {
                 No credits remaining
               </p>
             )}
-            <Link href="/workspace/pricing" className="block w-full">
-              <Button className="w-full" size="sm">
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade to Pro
-              </Button>
-            </Link>
+            {/* <Link href="/workspace/pricing" className="block w-full"> */}
+            <Button className="w-full" size="sm">
+              <Crown className="w-4 h-4 mr-2" />
+              Upgrade to Pro
+            </Button>
+            {/* </Link> */}
           </div>
         )}
       </section>
 
       <section className="flex items-center gap-3 p-4 border rounded-xl bg-secondary/50">
-        <UserButton 
+        <UserButton
           appearance={{
             elements: {
-              avatarBox: "w-10 h-10"
-            }
+              avatarBox: "w-10 h-10",
+            },
           }}
         />
         <div className="flex-1 min-w-0">
